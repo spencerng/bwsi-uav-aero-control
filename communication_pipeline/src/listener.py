@@ -25,8 +25,7 @@ class Listener():
         '''TODO-START: FILL IN CODE HERE 
         * print out the message received to the terminal
         '''
-        raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
-        '''TODO-END '''
+	print(msg)
 
 if __name__ == '__main__':
     '''
