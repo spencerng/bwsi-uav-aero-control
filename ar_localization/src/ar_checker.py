@@ -7,9 +7,6 @@ import numpy as np
 
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 
-import geometry_msgs
-
-
 _Z_THRESH = 0.1
 
 class ARDistChecker:
@@ -46,8 +43,7 @@ class ARDistChecker:
         '''
         TODO: Determine how to share marker data with check_dist
         '''
-    	marker = None # <-- fill-in
-        raise Exception("Delete this and fill-in marker definition!")
+    	marker = None
 
         z_des = self.get_dist(marker.id)
 
@@ -55,7 +51,6 @@ class ARDistChecker:
         '''
         TODO: Fill in conditionals appropriately to filter marker cases
         '''
-        raise Exception("Delete this and fix these conditionals!")
         if False and False:
             rospy.loginfo("Already seen: marker "+ str(marker.id))
 
