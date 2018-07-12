@@ -37,7 +37,18 @@ class Dispatcher():
         * Map the message received from /velocity_command into the variable vel_cmda_limited enforcing that all
         values are 0 except linear.x, which should be enforced as -_VELOCITY_COMMAND_LIMIT < linear.x < _VELOCITY_COMMAND_LIMIT
         '''
-        raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
+	vel_cmd_limited.linear.y = 0
+	vel_cmd_limited.linear.z = 0
+	vel_cmd_limited.angular.x = 0
+	vel_cmd_limited.angular.y = 0
+	vel_cmd_limited.angular.z = 0
+	if(velocity_command.linear.x < _VELOCITY_COMMAND_LIMIT and velocity_command.linear.x > -_VELOCITY_COMMAND_LIMIT):
+		vel_cmd_limited.linear.x = velocity_command.linear.x
+	elif(velocity_command.linear.x > _VELOCITY_COMMAND_LIMIT):   
+		vel_cmd_limited.linear.x = _VELOCITY_COMMAND_LIMIT
+	else:	
+		vel_cmd_limited.linear.x = -_VELOCITY_COMMAND_LIMIT
+        #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
         '''TODO-END '''
 
         self.local_velocity_setpoint_pub.publish(vel_cmd_limited)

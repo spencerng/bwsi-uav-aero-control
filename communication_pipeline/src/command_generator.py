@@ -5,7 +5,7 @@ from __future__ import division, print_function
 import rospy
 import numpy as np
 import time
-import math
+
 from geometry_msgs.msg import Twist
 
 '''
@@ -34,7 +34,7 @@ class VelocityCommander():
             * create a velocity command along the x-axis that oscillates with amplitude 0.1 m/s and period 2 seconds
             * All other velocity command components should be zero
             '''
-	    vel_cmd.linear.x = 0.1*math.cos(math.pi*t)
+	    vel_cmd.linear.x = a*np.cos(np.pi*t)
 	    vel_cmd.linear.y = 0
 	    vel_cmd.linear.z = 0
 	    vel_cmd.angular.x = 0		
