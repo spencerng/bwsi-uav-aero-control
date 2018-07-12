@@ -7,6 +7,8 @@ import numpy as np
 
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 
+import geometry_msgs
+
 
 _Z_THRESH = 0.1
 
@@ -17,22 +19,24 @@ class ARDistChecker:
         '''
         TODO: Determine how to initialize a subscriber for AR tracking
         '''
-        self.ar_pose_sub = None 
-        raise Exception("Delete this and fill-in subscriber intialization!")
+        self.ar_pose_sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, self.ar_pose_cb)
 
 
         self.seen = {}
         self.current_marker = None
+
+    def compute_distance(marker):
+	x = marker.pose.pose.position
+        return x
 
     def ar_pose_cb(self,msg):
         '''
         TODO: Filter incoming AR message to determine where drone is relative to tag
         '''
         if len(msg.markers) < 1: 
-            return
+		return
 
-        marker = None # <-- Fill in (Hint: consider python list filtering functions)
-        raise Exception("Delete this and filter AR message!")
+        marker = compute_distance(msg.markers[0])
 
         self.current_marker = marker
         self.check_dist()

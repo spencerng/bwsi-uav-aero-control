@@ -4,7 +4,7 @@
 
     <!--TODO: Fill in code to launch velocity_commander and dispather node-->
 
-    <!-- Launch MAVROS node -->
+   
     <arg name="log_output" default="screen" />
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
@@ -14,6 +14,8 @@
         <param name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
         <param name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
     </node>
-
+    <node name = "dispatcher" pkg="aero_control" type="dispatcher.py" output="screen"/>
+    <node name = "command_generator" pkg="aero_control" type="command_generator.py" output="screen"/>
+	
 
 </launch>

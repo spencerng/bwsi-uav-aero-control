@@ -42,9 +42,9 @@ class Dispatcher():
 	vel_cmd_limited.angular.x = 0
 	vel_cmd_limited.angular.y = 0
 	vel_cmd_limited.angular.z = 0
-	if(velocity_command.linear.x < _VELOCITY_COMMAND_LIMIT and velocity_command.linear.x > -_VELOCITY_COMMAND_LIMIT):
-		vel_cmd_limited.linear.x = velocity_command.linear.x
-	elif(velocity_command.linear.x > _VELOCITY_COMMAND_LIMIT):   
+	if(msg.linear.x < _VELOCITY_COMMAND_LIMIT and msg.linear.x > -_VELOCITY_COMMAND_LIMIT):
+		vel_cmd_limited.linear.x = msg.linear.x
+	elif(msg.linear.x > _VELOCITY_COMMAND_LIMIT):   
 		vel_cmd_limited.linear.x = _VELOCITY_COMMAND_LIMIT
 	else:	
 		vel_cmd_limited.linear.x = -_VELOCITY_COMMAND_LIMIT
