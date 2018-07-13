@@ -4,6 +4,7 @@ import rospy
 import time
 import threading
 import numpy as np
+import math
 
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 
@@ -49,14 +50,16 @@ class ARDistChecker:
         TODO: Determine how to share marker data with check_dist
         '''
         marker = self.current_marker
-
-        z_dist = self.get_dist(marker.id)
+	z_dist = marker.pose.pose.position.z
+	
+#        z_dist = self.get_dist(marker.id)
 
 
         '''
         TODO: Fill in conditionals appropriately to filter marker cases
         '''
-        if marker.id in self.seen.keys() and 1.1 > z_dist > 0.9:
+	        
+	if marker.id in self.seen.keys() and 1.1 > z_dist > 0.9:
             rospy.loginfo("Already seen: marker "+ str(marker.id))
 
         elif 1.1 > z_dist > 0.9:
@@ -64,8 +67,11 @@ class ARDistChecker:
             self.seen[marker.id] = marker
             # MINI TODO: How can we track successful detects? (HINT: add something to this elif block)
 
-        else:
-            rospy.loginfo("Not there yet: move " + str(z_dist) + " meters to capture " + str(marker.id))
+        elif marker.id not in self.seen.keys():
+            rospy.loginfo("Not there yet: move " + str(min(abs(1.1-z_dist),abs(0.9-z_dist))) + " meters to capture " + str(marker.id))
+
+
+	rospy.loginfo(str(marker.pose.pose.position.z)+'away')
             # MINI TODO: replace None with a method of calculating distance to AR tag
 
         
