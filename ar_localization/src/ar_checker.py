@@ -10,6 +10,8 @@ from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 _Z_THRESH = 0.1
 
 class ARDistChecker:
+
+    
     def __init__(self):
         rospy.loginfo("ARDistChecker Started!")
 
@@ -22,20 +24,19 @@ class ARDistChecker:
         self.seen = {}
         self.current_marker = None
 
-    def compute_distance(marker):
-	x = marker.pose.pose.position
-        return x
 
     def ar_pose_cb(self,msg):
         '''
         TODO: Filter incoming AR message to determine where drone is relative to tag
         '''
-        if len(msg.markers) < 1: 
-		return
-
-        marker = compute_distance(msg.markers[0])
-
-        self.current_marker = marker
+        min_dist = msg[0].pose.pose.position.z
+        self.current_marker = msg[0]
+        for marker in msg:
+            current_dist = msg.pose.pose.position.z
+            if current_dist < min_dist:
+                self.current_marker = marker
+                min_dist=current_dist
+            
         self.check_dist()
 
     def check_dist(self):
@@ -43,27 +44,31 @@ class ARDistChecker:
         '''
         TODO: Determine how to share marker data with check_dist
         '''
-    	marker = None
+   	marker = self.current_marker
 
-        z_des = self.get_dist(marker.id)
+        z_dist = self.get_dist(marker.id)
 
 
         '''
         TODO: Fill in conditionals appropriately to filter marker cases
         '''
-        if False and False:
+        if marker.id in self.seen.keys() and 1.1 > z_dist > 0.9:
             rospy.loginfo("Already seen: marker "+ str(marker.id))
 
-        elif False:
+        elif 1.1 > z_dist > 0.9:
             rospy.loginfo("Got it: marker " + str(marker.id) + " captured")
+            seen.put(marker.id, marker)
             # MINI TODO: How can we track successful detects? (HINT: add something to this elif block)
 
         else:
-            rospy.loginfo("Not there yet: move " + str(None) + " meters to capture " + str(marker.id))
+            rospy.loginfo("Not there yet: move " + str(z_dist) + " meters to capture " + str(marker.id))
             # MINI TODO: replace None with a method of calculating distance to AR tag
 
+        
+
     def get_dist(self,id):
-        return 1.0 # change later
+        return 1.0 #change later
+        
 
 
 if __name__ == '__main__':
