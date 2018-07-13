@@ -41,6 +41,12 @@ class ARDistChecker:
 
 			self.check_dist()
 
+	def within_range(self, dist, goal, tol):
+		if abs(dist-goal) < tol:
+			return True
+		else:
+			return False
+
 	def check_dist(self):
 
 		'''
@@ -49,19 +55,19 @@ class ARDistChecker:
 		marker = self.current_marker
 		z_dist = marker.pose.pose.position.z
 
-		#        z_dist = self.get_dist(marker.id)
+		z_des = self.get_dist(marker.id)
+		tol = 0.1
 
 		'''
 		TODO: Fill in conditionals appropriately to filter marker cases
 		'''
 
-		if marker.id in self.seen.keys() and 1.1 > z_dist > 0.9:
+		if marker.id in self.seen.keys() and self.within_range(z_dist, z_des, tol):
 			rospy.loginfo("Already seen: marker " + str(marker.id))
 
-		elif 1.1 > z_dist > 0.9:
+		elif self.within_range(z_dist, z_des, tol):
 			rospy.loginfo("Got it: marker " + str(marker.id) + " captured")
 			self.seen[marker.id] = marker
-			# MINI TODO: How can we track successful detects? (HINT: add something to this elif block)
 
 		elif marker.id not in self.seen.keys():
 			rospy.loginfo(
