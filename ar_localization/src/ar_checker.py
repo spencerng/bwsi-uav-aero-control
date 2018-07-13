@@ -9,6 +9,9 @@ from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 
 _Z_THRESH = 0.1
 
+
+#may  need to run rosrun ar_track_alvar createMarker or roslaunch the script
+
 class ARDistChecker:
 
     
@@ -29,22 +32,23 @@ class ARDistChecker:
         '''
         TODO: Filter incoming AR message to determine where drone is relative to tag
         '''
-        min_dist = msg[0].pose.pose.position.z
-        self.current_marker = msg[0]
-        for marker in msg:
-            current_dist = msg.pose.pose.position.z
-            if current_dist < min_dist:
-                self.current_marker = marker
-                min_dist=current_dist
-            
-        self.check_dist()
+	if len(msg.markers)>0:
+		min_dist = msg.markers[0].pose.pose.position.z
+		self.current_marker = msg.markers[0]
+		for marker in msg.markers:
+		    current_dist = marker.pose.pose.position.z
+		    if current_dist < min_dist:
+		        self.current_marker = marker
+		        min_dist=current_dist
+		    
+		self.check_dist()
 
     def check_dist(self):
 
         '''
         TODO: Determine how to share marker data with check_dist
         '''
-   	marker = self.current_marker
+        marker = self.current_marker
 
         z_dist = self.get_dist(marker.id)
 
@@ -57,7 +61,7 @@ class ARDistChecker:
 
         elif 1.1 > z_dist > 0.9:
             rospy.loginfo("Got it: marker " + str(marker.id) + " captured")
-            seen.put(marker.id, marker)
+            self.seen[marker.id] = marker
             # MINI TODO: How can we track successful detects? (HINT: add something to this elif block)
 
         else:
