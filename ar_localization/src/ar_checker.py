@@ -74,7 +74,6 @@ class ARDistChecker:
 				"Not there yet: move " + str(min(abs(1.1 - z_dist), abs(0.9 - z_dist))) + " meters to capture " + str(
 					marker.id))
 
-		rospy.loginfo(str(marker.pose.pose.position.z) + 'away')
 		# MINI TODO: replace None with a method of calculating distance to AR tag
 
 	def get_dist(self, id):
