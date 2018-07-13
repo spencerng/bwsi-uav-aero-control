@@ -4,12 +4,8 @@ from datetime import datetime
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 import rospy
 
-#array of all tags
-tags = {1:(0,0), 2:(10,10), 3:(4,5), 4:(6,3),
-        5:(3,9), 6:(8,1), 7:(1,3), 8:(6,2),9:(7,4),}# 0:(3,3)}
-
 #all permutations of tag IDs
-perms = list(itertools.permutations(tags))
+
 
 #define distance formula
 def dist(a, b, dict): #given two permutations:
@@ -17,15 +13,24 @@ def dist(a, b, dict): #given two permutations:
 
 class ARSalesman:
 
-    graphed = False
+	#array of all tags
+
+	graphed = False
 
 	def __init__(self):
 		rospy.loginfo("ARSalesman Started!")
 		self.ar_pose_sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, self.ar_pose_cb)
 
 	def ar_pose_cb(self, msg):
-		if len(msg.messages)<3 or self.graphed:
-            return
+		if len(msg.markers)<1 or self.graphed:
+			return
+
+		marker_data = {}		
+		for marker in msg.markers:
+			marker_data[marker.id]=(marker.pose.pose.position.x,marker.pose.pose.position.y)
+
+		perms = list(itertools.permutations(marker_data))
+
 		#compute total distance of each permutation
 		best_dist = 1000000 #really big number, doesn't matter what
 		best_perm = None
@@ -47,6 +52,8 @@ class ARSalesman:
 			#print("Best permutation: "+str(best_perm))
 		print(best_perm)
 		print(best_dist)
+		graphed=True
+		print(marker_data)
 
 if __name__ == '__main__':
 	rospy.init_node('ar_salesman')
