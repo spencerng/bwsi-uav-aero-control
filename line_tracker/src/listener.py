@@ -4,7 +4,7 @@ from __future__ import division, print_function
 
 import rospy
 # TODO-START: Import our custom message
-raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
+from line_tracker.msg import Line #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
 # TODO-END
 
 
@@ -17,14 +17,15 @@ class Listener():
     '''
     def __init__(self):
         # TODO-START: subscribe to our custom chatter topic, using chatter_callback as the callback
-        raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
+        rospy.init_node('custom_listener', anonymous=True)
+        rospy.Subscriber("/custom_chatter", Line, callback)# raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
         # TODO-END
 
     def chatter_callback(self, msg):
         ''' Function to be run everytime a message is received on chatter topic
         '''
         # TODO-START: print the x, y, vx, and vy values in msg
-        raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
+        rospy.log(msg) #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
         # TODO-END
 
 if __name__ == '__main__':
