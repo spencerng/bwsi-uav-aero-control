@@ -18,12 +18,16 @@ class Talker():
     def __init__(self, chat_frequency=1.0):
 
         
-        raise Exception("CODE INCOMPLETE! Delete this exception and complete the following lines")
+        #raise Exception("CODE INCOMPLETE! Delete this exception and complete the following lines")
         self.chatter_pub = rospy.Publisher('/custom_chatter',Line) # TODO subscribe to our custom chatter topic, using chatter_callback as the callback
 
         # rate of publishing
         self.chat_frequency = rospy.Rate(chat_frequency)
 	msg = Line()
+	msg.x = 0
+	msg.y = 0
+	msg.vx = 0
+	msg.vy = 0
 		
     def start_chatter(self):
         ''' send messages on chatter topic at regular rate
