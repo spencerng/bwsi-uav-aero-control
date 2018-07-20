@@ -217,8 +217,10 @@ class TranslationController:
         Encode this in the linear portion of the Twist message and assign to the member variable
         self.vel_setpoint_bu_lenu__lenu     
         '''
-        self.vel_setpoint_bu_lenu__lenu.linear = get_lenu_velocity(self.q_bu_lenu, velsp__fin, fin)
-        
+        vel_setpoint = get_lenu_velocity(self.q_bu_lenu, velsp__fin, fin)
+        self.vel_setpoint_bu_lenu__lenu.linear.x = vel_setpoint[0]
+        self.vel_setpoint_bu_lenu__lenu.linear.y = vel_setpoint[1]
+        self.vel_setpoint_bu_lenu__lenu.linear.z = vel_setpoint[2]
          
         
         #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
