@@ -326,6 +326,15 @@ class TranslationController:
     #################################################################################################################################
     #################################################################################################################################
 
+def square(controller):
+    controller.execute_maneuver([0.0,0.3,0.0], "bu", 2)
+    controller.execute_maneuver([0.0,0.0,0.3], "bu", 2)
+    controller.execute_maneuver([0.0,-0.3,0], "bu", 2)
+    controller.execute_maneuver([0.0,0.0,-0.3], "bu", 2)
+def basic(controller):
+    controller.execute_maneuver([0.0,0.3,0.0], "bu", 2)
+    controller.execute_maneuver([0.1,0.0,0.0], "bu", 1)
+
 if __name__ == '__main__':
 
     controller = TranslationController(MANEUVER_VELOCITY_SETPOINT, MANEUVER_REFERENCE_FRAME, MANEUVER_DURATION)
@@ -334,10 +343,10 @@ if __name__ == '__main__':
     # TODO: Write code that publishes "don't move" velocity commands until the drone is place into offboard mode
     #######################################
     while not (controller.current_state.mode == "OFFBOARD"):
+	rospy.loginfo('not in offboard')
         controller.hover()
-    controller.execute_maneuver([0.0,0.3,0.0], "bu", 2)
-#    controller.execute_maneuver([0.1,0.0,0.0], "bu", 1)
-        
+    rospy.loginfo('switched to offboard')
+    basic(controller)    
     #######################################
     rospy.spin()
 
