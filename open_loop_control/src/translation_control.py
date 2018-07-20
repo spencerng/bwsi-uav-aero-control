@@ -334,6 +334,23 @@ def square(controller):
 def basic(controller):
     controller.execute_maneuver([0.0,0.3,0.0], "bu", 2)
     controller.execute_maneuver([0.1,0.0,0.0], "bu", 1)
+def jenny(controller):
+	#vel = 0.25 #meters/second
+
+	#height = 1.5
+	#width = height * 1.5 #2.25m
+
+	controller.execute_maneuver([0, .25, -0.25],'bu',1.5)
+	controller.execute_maneuver([0, .25, 0.25],'bu',1.5)
+	controller.execute_maneuver([0, 0, 0.25],'bu',4.5)
+	controller.execute_maneuver([0, -.25, 0],'bu',3.0)
+	controller.execute_maneuver([0, .25, 0],'bu',6.0)
+	controller.execute_maneuver([0, .25, -0.125],'bu',3.0)
+	controller.execute_maneuver([0, 0, -0.25],'bu',1.5)
+	controller.execute_maneuver([0, -.25, -0.125],'bu',3.0)
+	controller.execute_maneuver([0, 0, -0.25],'bu',1.5)
+	controller.execute_maneuver([0, 0, 0.25],'bu',6)
+
 
 if __name__ == '__main__':
 
