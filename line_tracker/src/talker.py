@@ -23,11 +23,7 @@ class Talker():
 
         # rate of publishing
         self.chat_frequency = rospy.Rate(chat_frequency)
-	msg = Line()
-	msg.x = 0
-	msg.y = 0
-	msg.vx = 0
-	msg.vy = 0
+	
 		
     def start_chatter(self):
         ''' send messages on chatter topic at regular rate
@@ -35,6 +31,11 @@ class Talker():
         i = 0
         while (not rospy.is_shutdown()):
             i = i + 1
+	    msg = Line()
+	    msg.x = i
+            msg.y = i+1
+	    msg.vx = i+2
+	    msg.vy = i+3
             # TODO-START: create and publish a custom message [values can be anything]
             self.chatter_pub.publish(msg)#raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
             # TODO-END

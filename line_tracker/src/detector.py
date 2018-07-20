@@ -8,21 +8,22 @@ from cv_bridge import CvBridge, CvBridgeError
 from aero_control.msg import Line
 import sys
 
-DEBUG = True
+_DEBUG = True
 
 class LineDetector:
     def __init__(self):
         #raise Exception("CODE INCOMPLETE! Delete this exception and complete the following lines")
         self.sub_cam = rospy.Subscriber("/aero_downward_camera/image", Image, self.image_cb)
         
-        self.pub_param = rospy.Publisher('/custom_chatter',Line)
+        self.pub_param = rospy.Publisher('/line_detection/line',Line)
         
-        
+        self.image_pub = rospy.Publisher('/line_detection/feed',Image)
         self.bridge = CvBridge()
         #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
         # TODO-END
 
     def parameterizeLine(self, img):
+
         """ Fit a line to LED strip
         :param cv_image: opencv image
         """
@@ -33,7 +34,7 @@ class LineDetector:
         result = cv2.dilate(result, kernel, iterations=2)
         kernel=np.ones((3,3),np.uint8)
         result = cv2.erode(result, kernel, iterations=2)
-    
+	  
     
         ret,thresh = cv2.threshold(result,245,255,cv2.THRESH_BINARY)
         _, contours, _ = cv2.findContours(thresh, 1, 2)
@@ -51,7 +52,8 @@ class LineDetector:
         [vx,vy,x,y] = cv2.fitLine(cnt, cv2.DIST_L2,0,0.01,0.01)
         if vx[0] < 0.00001:
             vx = 0.00001
-        return(x,y,vx,vy)
+	
+        
         
 
         #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
@@ -68,14 +70,17 @@ class LineDetector:
                 #self.image_pub.publish(self.bridge.cv2_to_imgmsg(result, "8UC1"))
             except CvBridgeError as e:
                 print(e)
-        return msg
+	return(x,y,vx,vy)
         # TODO-START: return x, y, vx, and vy in that order
         #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
         # TODO-END
 
     def image_cb(self, data):
+	
         line = self.parameterizeLine(self.bridge.imgmsg_to_cv2(data, "8UC1"))
-        if line is not None:
+	  
+        if type(line) is not None:
+            
             x, y, vx, vy = line
             msg = Line()
             msg.x=x
@@ -83,7 +88,7 @@ class LineDetector:
             msg.vx=vx
             msg.vy=vy
             # TODO-START: create a line message and publish it with x, y, vx, and vy
-            sef.pub_param.publish(msg)
+            self.pub_param.publish(msg)
             #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
             # TODO-END
             
