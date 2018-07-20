@@ -217,7 +217,11 @@ class TranslationController:
         Encode this in the linear portion of the Twist message and assign to the member variable
         self.vel_setpoint_bu_lenu__lenu     
         '''
-        raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
+        self.vel_setpoint_bu_lenu__lenu.linear = get_lenu_velocity(self.q_bu_lenu, velsp__fin, fin)
+        
+         
+        
+        #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
         '''TODO-END '''
 
         # Publish command velocites for timedelta seconds
@@ -327,7 +331,10 @@ if __name__ == '__main__':
     # In order to enter offboard mode, the drone must already be receiving commands
     # TODO: Write code that publishes "don't move" velocity commands until the drone is place into offboard mode
     #######################################
-    # Your code here
+    while not (controller.current_state.mode == "OFFBOARD"):
+        controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.01)
+    controller.execute_maneuver([0.0,1.0,0.0], "bu", 2)
+        
     #######################################
     rospy.spin()
 
