@@ -332,8 +332,9 @@ if __name__ == '__main__':
     # TODO: Write code that publishes "don't move" velocity commands until the drone is place into offboard mode
     #######################################
     while not (controller.current_state.mode == "OFFBOARD"):
-        controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.01)
-    controller.execute_maneuver([0.0,1.0,0.0], "bu", 2)
+        controller.hover()
+    controller.execute_maneuver([0.0,0.3,0.0], "bu", 2)
+#    controller.execute_maneuver([0.1,0.0,0.0], "bu", 1)
         
     #######################################
     rospy.spin()
