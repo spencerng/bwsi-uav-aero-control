@@ -357,12 +357,12 @@ def jenny(controller):
 	controller.execute_maneuver([0, .25/math.sqrt(2), 0.25/math.sqrt(2)],'bu',1.5)
 	controller.execute_maneuver([0, 0, 0.25],'bu',4.5)
 	controller.execute_maneuver([0, -.25, 0],'bu',2.0)
-	controller.execute_maneuver([0, .25, 0],'bu',6.0)
-	controller.execute_maneuver([0, .25, -0.125],'bu',3.0)
-	controller.execute_maneuver([0, 0, -0.25],'bu',1.5)
-	controller.execute_maneuver([0, -.25, -0.125],'bu',3.0)
-	controller.execute_maneuver([0, 0, -0.25],'bu',1.5)
-	controller.execute_maneuver([0, 0, 0.25],'bu',6)
+	controller.execute_maneuver([0, .25, 0],'bu',4.0)
+	controller.execute_maneuver([0, .25, -0.11],'bu',2)
+	controller.execute_maneuver([0, 0, -0.15],'bu',1.5)
+	controller.execute_maneuver([0, -.25, -0.125],'bu',2.0)
+	controller.execute_maneuver([0, 0, 0.2],'bu',3.3)
+	controller.execute_maneuver([0, 0, -0.2],'bu',6)
 
 
 if __name__ == '__main__':
