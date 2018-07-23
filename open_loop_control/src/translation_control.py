@@ -48,9 +48,9 @@ class StaticTransforms():
     
     # local ENU and local NED
     R_lenu2lned = np.array([[0.0, 1.0, 0.0, 0.0],
-                            [1.0, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, -1.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0]])
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, -1.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0]])
 
     # body-up and body-down
     R_bu2bd = tft.rotation_matrix(np.pi, (1,0,0))
@@ -60,9 +60,9 @@ class StaticTransforms():
 
     # forward camera and body-down
     R_fc2bd = np.array([[0.0, 0.0, 1.0, 0.0],
-                        [1.0, 0.0, 0.0, 0.0],
-                        [0.0, 1.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 1.0]])
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0]])
     
     # Find inverse rotation matrices 
     R_lned2lenu = R_lenu2lned.T
@@ -83,8 +83,8 @@ class StaticTransforms():
     
     def __init__(self):
         pass
-    
-    def coord_transform(self, v__fin, fin, fout):
+
+        def coord_transform(self, v__fin, fin, fout):
         ''' transform vector v which is represented in frame fin into its representation in frame fout
         Args:
         - v__fin: 3D vector represented in fin coordinates
@@ -101,7 +101,7 @@ class StaticTransforms():
             v4__fout = np.dot(R, v4__fin)
             v__fout = np.array(v4__fout[0:3])
             return v__fout
-        
+
         # check for existence of rotation matrix
         R_str = 'R_{}2{}'.format(fin, fout)
         try:
@@ -110,14 +110,14 @@ class StaticTransforms():
             err = 'No static transform exists from {} to {}.'.format(fin, fout)
             err += ' Are you sure these frames are not moving relative to each other?'
             raise AttributeError(err)
-        
+
         # perform transform
         v4__fin = list(v__fin) + [0.0]
         v4__fout = np.dot(R_i2o, v4__fin)
         v__fout = np.array(v4__fout[0:3])
         return v__fout
 
-def get_lenu_velocity(q_bu_lenu, v__fin, fin, static_transforms=None):
+        def get_lenu_velocity(q_bu_lenu, v__fin, fin, static_transforms=None):
         '''tranforms a vector represented in fin frame to vector in lenu frame
         Args:
         - v__fin: 3D vector represented in input frame coordinates
@@ -130,13 +130,13 @@ def get_lenu_velocity(q_bu_lenu, v__fin, fin, static_transforms=None):
         if static_transforms is None:
             static_transforms = StaticTransforms()
 
-        if fin=='lenu':
-            v__lenu = v__fin
+            if fin=='lenu':
+                v__lenu = v__fin
 
-        elif fin=='lned':
-            v__lenu = static_transforms.coord_transform(v__fin, 'lned', 'lenu')
+            elif fin=='lned':
+                v__lenu = static_transforms.coord_transform(v__fin, 'lned', 'lenu')
 
-        else:
+            else:
             # create rotation matrix from quaternion
             R_bu2lenu = tft.quaternion_matrix(q_bu_lenu)
             
@@ -146,17 +146,17 @@ def get_lenu_velocity(q_bu_lenu, v__fin, fin, static_transforms=None):
             # calculate lenu representation of v
             v__lenu = np.dot(R_bu2lenu, list(v__bu)+[0.0])
 
-        v__lenu = np.array(v__lenu[0:3])
-        return v__lenu
- 
+            v__lenu = np.array(v__lenu[0:3])
+            return v__lenu
+
 #########################################################################################################################
 # TRANSLATION CONTROLLER
 #########################################################################################################################
 class TranslationController:
 
     def __init__(self, maneuver_velocity_setpoint=np.array([0.1, 0.0, 0.0]),
-                       maneuver_reference_frame='bu',
-                       maneuver_duration=3.0):
+     maneuver_reference_frame='bu',
+     maneuver_duration=3.0):
         """ Object that manages velocity commands for OFFBOARD mode
         Attributes:
         - vel_sepoint_pub: rospy publisher for cmd_vel_unstamped topic
@@ -196,7 +196,7 @@ class TranslationController:
         self.maneuver_reference_frame = maneuver_reference_frame
         self.maneuver_duration = maneuver_duration
 
-    def execute_maneuver(self, velsp__fin, fin, duration):
+        def execute_maneuver(self, velsp__fin, fin, duration):
         ''' move at given velocity, described in a given frame, for a given duration
         Args:
         - velsp__fin: [m/s] 3D vector of desired velocity expressed in input reference frame 'fin'
@@ -206,7 +206,7 @@ class TranslationController:
         - This function only needs to update the variable self.vel_setpoint_bu_lenu__lenu, it does not actually call the
             publish command. The publish command is constantly being called in run_streaming with whatever
             is currently stored in self.vel_setpoint_bu_lenu__lenu.
-        '''
+            '''
 
         # timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
         timedelta = datetime.timedelta(seconds = duration)
@@ -244,7 +244,7 @@ class TranslationController:
         # at end of maneuver, set setpoint back to zero
         self.vel_setpoint_bu_lenu__lenu = Twist()
 
-    def hover(self):
+        def hover(self):
         ''' change setpoint to zero velocity. streaming_offboard_points automatically sends info
         '''
         self.vel_setpoint_bu_lenu__lenu = Twist()
@@ -265,8 +265,8 @@ class TranslationController:
                     # limit speed for safety
                     velsp_limited = deepcopy(self.vel_setpoint_bu_lenu__lenu)
                     speed = np.linalg.norm([velsp_limited.linear.x,
-                                            velsp_limited.linear.y,
-                                            velsp_limited.linear.z])
+                        velsp_limited.linear.y,
+                        velsp_limited.linear.z])
                     if speed > Constants.MAX_SPEED:
                         rospy.logwarn("Velocity setpoint too high! Limiting speed to {} m/s".format(Constants.MAX_SPEED))
                         velsp_limited.linear.x *= Constants.MAX_SPEED/speed
@@ -277,12 +277,12 @@ class TranslationController:
                     # Publish limited setpoint
                     self.vel_setpoint_pub.publish(velsp_limited)
 
-                self.rate.sleep()
+                    self.rate.sleep()
 
-        self.offboard_point_streaming_thread = threading.Thread(target=run_streaming)
-        self.offboard_point_streaming_thread.start()
+                    self.offboard_point_streaming_thread = threading.Thread(target=run_streaming)
+                    self.offboard_point_streaming_thread.start()
 
-    def stop_streaming_offboard_points(self):
+                    def stop_streaming_offboard_points(self):
         """ Safely terminates offboard publisher
         """
         self.offboard_point_streaming = False
@@ -291,47 +291,47 @@ class TranslationController:
         except AttributeError:
             pass
 
-    def pose_sub_cb(self, msg):
+            def pose_sub_cb(self, msg):
         """
         Callback function which is called when a new message of type PoseStamped is recieved by self.position_subscriber.
             Args: 
                 - msg = ROS PoseStamped message
-        """
-        self.q_bu_lenu = [msg.pose.orientation.x,
-                          msg.pose.orientation.y,
-                          msg.pose.orientation.z,
-                          msg.pose.orientation.w]
+                """
+                self.q_bu_lenu = [msg.pose.orientation.x,
+                msg.pose.orientation.y,
+                msg.pose.orientation.z,
+                msg.pose.orientation.w]
 
-    def state_cb(self, msg):
+                def state_cb(self, msg):
         """ callback function for mavros/state messages
         Notes:
             - The purpose of this function to to manage the streaming of setpoints based on which flight mode
             the drone is currently operation. 
-        """
-        self.prev_state = deepcopy(self.current_state)
-        self.current_state = msg
+            """
+            self.prev_state = deepcopy(self.current_state)
+            self.current_state = msg
 
-        if self.current_state.mode == "MANUAL":
-            if self.offboard_point_streaming:
-                rospy.loginfo("Setpoint stream DISABLED")
-                self.stop_streaming_offboard_points()
+            if self.current_state.mode == "MANUAL":
+                if self.offboard_point_streaming:
+                    rospy.loginfo("Setpoint stream DISABLED")
+                    self.stop_streaming_offboard_points()
 
-        if self.current_state.mode == "POSCTL":
-            if not self.offboard_point_streaming:
-                rospy.loginfo("Setpoint stream ENABLED")
-                self.start_streaming_offboard_points()
-            if not self.prev_state.mode == "POSCTL":
+                    if self.current_state.mode == "POSCTL":
+                        if not self.offboard_point_streaming:
+                            rospy.loginfo("Setpoint stream ENABLED")
+                            self.start_streaming_offboard_points()
+                            if not self.prev_state.mode == "POSCTL":
                 # just switched into POSCTL, call hover
                 self.hover()
 
-        if self.current_state.mode == "OFFBOARD":
-            if not self.prev_state.mode == "OFFBOARD":
+                if self.current_state.mode == "OFFBOARD":
+                    if not self.prev_state.mode == "OFFBOARD":
                 # just switched to OFFBOARD, call move
                 rospy.loginfo("Entering OFFBOARD Mode")
                 self.execute_maneuver(  self.maneuver_velocity_setpoint, 
-                                        self.maneuver_reference_frame, 
-                                        self.maneuver_duration)
-            
+                    self.maneuver_reference_frame, 
+                    self.maneuver_duration)
+
     #################################################################################################################################
     #################################################################################################################################
 
@@ -348,30 +348,44 @@ def basic(controller):
     controller.execute_maneuver([0.0,0.,0.0], "bu", 2)
     controller.execute_maneuver([0.0,0.0,0.0], "bu", 1)
 def jenny(controller):
-	#vel = 0.25 #meters/second
+	
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, .25/math.sqrt(2), -0.25/math.sqrt(2)],'bu',1.5)
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, .25/math.sqrt(2), 0.25/math.sqrt(2)],'bu',1.5)
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, 0, 0.25],'bu',4.5)
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, -.25, 0],'bu',2.0)
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, .25, 0],'bu',4.0)
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, .25, -0.11],'bu',2)
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, 0, -0.15],'bu',1.5)
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, -.25, -0.125],'bu',2.0)
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, 0, 0.2],'bu',3.3)
+    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
+    controller.execute_maneuver([0, 0, -0.2],'bu',6)
 
-	#height = 1.5
-	#width = height * 1.5 #2.25m
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, .25/math.sqrt(2), -0.25/math.sqrt(2)],'bu',1.5)
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, .25/math.sqrt(2), 0.25/math.sqrt(2)],'bu',1.5)
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, 0, 0.25],'bu',4.5)
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, -.25, 0],'bu',2.0)
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, .25, 0],'bu',4.0)
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, .25, -0.11],'bu',2)
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, 0, -0.15],'bu',1.5)
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, -.25, -0.125],'bu',2.0)
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, 0, 0.2],'bu',3.3)
-    controller.execute_maneuver([0.0,0.0,0.0], "bu", 0.8)
-	controller.execute_maneuver([0, 0, -0.2],'bu',6)
+def exec_path(ctrl, points, vmax=0.2):
+  current_x = 0
+  current_y = 0
+  for point in points:
+    dx = point[0]-current_x
+    dy = point[1] - current_y
+    current_x = point[0]
+    current_y = point[1]
+    dist = math.sqrt(dx**2+dy**2)
+    vx=(dx*vmax)/dist
+    vy=(dy*vmax)/dist
+    t=dx/vx
+    print(vx,vy,t)
+
+    ctrl.execute_maneuver([0.0,-vx,vy], "bu", 0.8)
+
 
 
 if __name__ == '__main__':
@@ -383,10 +397,10 @@ if __name__ == '__main__':
     # TODO: Write code that publishes "don't move" velocity commands until the drone is place into offboard mode
     #######################################
     while not (controller.current_state.mode == "OFFBOARD"):
-	rospy.loginfo('not in offboard')
-        controller.hover()
-    rospy.loginfo('switched to offboard')
-    basic(controller)    
+       rospy.loginfo('not in offboard')
+       controller.hover()
+       rospy.loginfo('switched to offboard')
+       square++++++++++++++++++(controller)    
     #######################################
 
     rospy.spin()
@@ -394,4 +408,3 @@ if __name__ == '__main__':
     controller.stop_streaming_offboard_points()
     print('DONE!')
 
-    
