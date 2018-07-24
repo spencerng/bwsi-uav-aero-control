@@ -15,11 +15,30 @@ from mavros_msgs.msg import State
 from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 
-NO_ROBOT = False # set to True to test on laptop
+NO_ROBOT = True # set to True to test on laptop
 MAX_SPEED = .5 # [m/s]
 K_P_X = 0 # TODO: decide upon initial K_P_X
 K_P_Y = 0 # TODO: decide upon initial K_P_Y
+CENTER = (64, 64)
+D = 0
 class LineTracker:
+    def conv_vect(v_x, v_y)
+	if v_x<0:
+	  v_x = -1*v_x
+	  v_y = -1*v_y
+	return(v_x, v_y)
+    def find(x, y, v_x, v_y)
+	m = v_y/v_x
+	b = y - m * x
+	xc = ((m(CENTER[1]-b) + p) / (m**2 +1))
+	yc = m*(xc) + b 
+	return xc, yc
+    def find_error(xc, yc)
+	return (xc-CENTER[0], yc-CENTER[1])
+    def position(xc, yc, v_x, y_x)
+	x_f = xc + d*(v_x)
+	y_f = yc + d*(v_y)
+	return(x_f - CENTER[0], y_f - CENTER[1])
     def __init__(self, rate=10):
         """ Initializes publishers and subscribers, sets initial values for vars
         :param rate: the rate at which the setpoint_velocity is published
@@ -31,9 +50,9 @@ class LineTracker:
         self.bridge = CvBridge()
 
         self.pub_local_velocity_setpoint = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel", TwistStamped, queue_size=1)
-        self.sub_line_param = rospy.Subscriber("/line/param", Line, self.line_param_cb)
-        self.pub_error = rospy.publisher("/line/error", Vector3, queue_size=1)
-
+        self.sub_line_param = rospy.Subscriber("/line_detection/line", Line, self.line_param_cb)
+        self.pub_error = rospy.Publisher("/line/error", Vector3, queue_size=1)
+	
 
         # Variables dealing with publishing setpoint
         self.sub_state = rospy.Subscriber("/mavros/state", State, self.state_cb)
@@ -64,6 +83,10 @@ class LineTracker:
             Be sure to publish your error using self.pub_error.publish(Vector3(x_error,y_error,0))
     
             """
+	    vx,vy = conv_vect(self.sub_line_param.vx, self.sub_line_param.vy)		
+	    
+
+
             # TODO-START: Create velocity controller based on above specs
             raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
             # TODO-END
