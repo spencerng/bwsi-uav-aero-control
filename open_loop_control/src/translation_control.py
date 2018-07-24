@@ -398,11 +398,12 @@ if __name__ == '__main__':
     # In order to enter offboard mode, the drone must already be receiving commands
     # TODO: Write code that publishes "don't move" velocity commands until the drone is place into offboard mode
     #######################################
+    controller.start_streaming_offboard_points()
     while not (controller.current_state.mode == "OFFBOARD"):
        rospy.loginfo('not in offboard')
        controller.hover()
        rospy.loginfo('switched to offboard')
-       square++++++++++++++++++(controller)    
+       square(controller)    
     #######################################
 
     rospy.spin()
