@@ -17,8 +17,8 @@ from copy import deepcopy
 
 NO_ROBOT = True # set to True to test on laptop
 MAX_SPEED = .5 # [m/s]
-K_P_X = 0 # TODO: decide upon initial K_P_X
-K_P_Y = 0 # TODO: decide upon initial K_P_Y
+K_P_X = 2 # TODO: decide upon initial K_P_X
+K_P_Y = 2 # TODO: decide upon initial K_P_Y
 CENTER = (64, 64)
 D = 0
 class LineTracker:
@@ -39,6 +39,10 @@ class LineTracker:
 	x_f = xc + d*(v_x)
 	y_f = yc + d*(v_y)
 	return(x_f - CENTER[0], y_f - CENTER[1])
+    def p_control(pos)
+	vel_cmd_x = - K_P_X * pos[0]
+	vel_cmd_y = - K_P_Y * pos[1]
+	return (vel_cmd_x,vel_cmd_y)
     def __init__(self, rate=10):
         """ Initializes publishers and subscribers, sets initial values for vars
         :param rate: the rate at which the setpoint_velocity is published
@@ -84,11 +88,20 @@ class LineTracker:
     
             """
 	    vx,vy = conv_vect(self.sub_line_param.vx, self.sub_line_param.vy)		
+	    x,y = self.sub_line_param.x, self.sub_line_param.y
+	    xc,yc =  find(x, y, vx, vy)
 	    
+	    err = find_error(xc, yc)
+	    self.pub_error.publish(Vector3(err[0],err[1],0))
 
-
+	    pos = position(xc, yc, vx, yx)
+	    self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y = p_control(pos)
+	    self.velocity_setpoint.twist.linear.z = 0
+	    self.velocity_setpoint.twist.angular.x = 0
+	    self.velocity_setpoint.twist.angular.y = 0
+            self.velocity_setpoint.twist.angular.z = 0
             # TODO-START: Create velocity controller based on above specs
-            raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
+            #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
             # TODO-END
 
     def state_cb(self, state):
