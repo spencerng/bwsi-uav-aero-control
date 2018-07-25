@@ -147,7 +147,7 @@ class LineTracker:
             self.offboard_point_streaming = True
             while (not rospy.is_shutdown()) and self.offboard_point_streaming:
                 # Publish commands
-                if (self.vel_setpnt is not None):
+                if (self.vel_setpoint is not None):
                     # limit speed for safety
                     velocity_setpoint_limited = deepcopy(self.velocity_setpoint)
                     speed = np.linalg.norm([velocity_setpoint_limited.linear.x,
