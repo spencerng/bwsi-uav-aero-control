@@ -103,9 +103,9 @@ class LineTracker:
             Be sure to publish your error using self.pub_error.publish(Vector3(x_error,y_error,0))
     
             """
-	    vx,vy = self.conv_vect(vx, vy)
+	    vx,vy = self.conv_vect(line_params.vx, line_params.vy)
             print("Velocities:",vx,vy)
-            xc,yc =  self.find_closest_point(x, y, vx, vy)
+            xc,yc =  self.find_closest_point(line_params.x, line_params.y, vx, vy)
 
             print("Point closest to line:",xc,yc)
         
