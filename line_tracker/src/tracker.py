@@ -8,7 +8,7 @@ import numpy as np
 from geometry_msgs.msg import TwistStamped, PoseStamped, Quaternion, Point, Vector3
 from sensor_msgs.msg import Image
 from tf.transformations import quaternion_from_euler, quaternion_matrix
-from aero_control_staffonly.msg import Line, TrackerParams
+from aero_control.msg import Line, TrackerParams
 import cv2
 import mavros
 from mavros_msgs.msg import State
@@ -21,28 +21,43 @@ K_P_X = 2 # TODO: decide upon initial K_P_X
 K_P_Y = 2 # TODO: decide upon initial K_P_Y
 CENTER = (64, 64)
 D = 0
-class LineTracker:
-    def conv_vect(v_x, v_y)
-	if v_x<0:
-	  v_x = -1*v_x
-	  v_y = -1*v_y
-	return(v_x, v_y)
-    def find(x, y, v_x, v_y)
-	m = v_y/v_x
-	b = y - m * x
-	xc = ((m(CENTER[1]-b) + p) / (m**2 +1))
-	yc = m*(xc) + b 
-	return xc, yc
-    def find_error(xc, yc)
-	return (xc-CENTER[0], yc-CENTER[1])
-    def position(xc, yc, v_x, y_x)
-	x_f = xc + d*(v_x)
-	y_f = yc + d*(v_y)
-	return(x_f - CENTER[0], y_f - CENTER[1])
-    def p_control(pos)
-	vel_cmd_x = - K_P_X * pos[0]
-	vel_cmd_y = - K_P_Y * pos[1]
-	return (vel_cmd_x,vel_cmd_y)
+class LineTracker:@staticmethod
+    def conv_vect(v_x, v_y):
+        if v_x<0:
+          v_x = -1*v_x
+          v_y = -1*v_y
+        return(v_x, v_y)
+    @staticmethod
+    def find_closest_point(x, y, v_x, v_y):
+        m_reg = v_y/v_x
+        b_reg = y - m_reg * x
+
+        b_perp = CENTER[1]+CENTER[0]/m_reg
+        #This is the point of intersection between the line perpendicular to the received line
+        #containing the drone's position and the received line
+        xc = ((m_reg*(b_perp-b_reg)) / (m_reg**2 +1))
+        yc =-xc/m_reg + b_perp 
+        return xc, yc
+    @staticmethod
+    def find_error(xc, yc):
+        return (xc-CENTER[0], yc-CENTER[1])
+    @staticmethod
+    def d_target_position(xc, yc, v_x, v_y):
+        #Gives distance from drone current position to target point
+        #Target point is DIST away from the closest point, in the +x direction
+        theta=np.arctan(v_y/v_x)
+        x_f = xc + DIST*np.cos(theta)
+        y_f = yc + DIST*np.sin(theta)
+        return(x_f - CENTER[0], y_f - CENTER[1])
+    @staticmethod
+    def p_control(pos):
+        vel_cmd_x =  K_P_X * pos[0]
+        vel_cmd_y =  -K_P_Y * pos[1] #Set negative due to BU frame of reference compared to downward camera
+        speed = np.linalg.norm([vel_cmd_x,vel_cmd_y])
+        if speed > MAX_SPEED:
+            vel_cmd_x *= MAX_SPEED / speed
+            vel_cmd_y *= MAX_SPEED / speed
+        return (vel_cmd_x,vel_cmd_y)
     def __init__(self, rate=10):
         """ Initializes publishers and subscribers, sets initial values for vars
         :param rate: the rate at which the setpoint_velocity is published
@@ -55,7 +70,7 @@ class LineTracker:
 
         self.pub_local_velocity_setpoint = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel", TwistStamped, queue_size=1)
         self.sub_line_param = rospy.Subscriber("/line_detection/line", Line, self.line_param_cb)
-        self.pub_error = rospy.Publisher("/line/error", Vector3, queue_size=1)
+        self.pub_error = rospy.Publisher("/line_detection/error", Vector3, queue_size=1)
 	
 
         # Variables dealing with publishing setpoint
@@ -87,15 +102,22 @@ class LineTracker:
             Be sure to publish your error using self.pub_error.publish(Vector3(x_error,y_error,0))
     
             """
-	    vx,vy = conv_vect(self.sub_line_param.vx, self.sub_line_param.vy)		
-	    x,y = self.sub_line_param.x, self.sub_line_param.y
-	    xc,yc =  find(x, y, vx, vy)
-	    
-	    err = find_error(xc, yc)
+	    vx,vy = self.conv_vect(vx, vy)
+            print("Velocities:",vx,vy)
+            xc,yc =  self.find_closest_point(x, y, vx, vy)
+
+            print("Point closest to line:",xc,yc)
+        
+            err = self.find_error(xc, yc)
+            print("Error:",err)
+
 	    self.pub_error.publish(Vector3(err[0],err[1],0))
 
-	    pos = position(xc, yc, vx, yx)
-	    self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y = p_control(pos)
+	    pos = self.d_target_position(xc, yc, vx, vy)
+            print("Target point deltas:",pos)
+            print("Actuator Velocities:",self.p_control(pos))
+
+	    self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y = self.p_control(pos)
 	    self.velocity_setpoint.twist.linear.z = 0
 	    self.velocity_setpoint.twist.angular.x = 0
 	    self.velocity_setpoint.twist.angular.y = 0
