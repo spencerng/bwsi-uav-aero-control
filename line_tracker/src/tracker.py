@@ -21,7 +21,8 @@ K_P_X = 2 # TODO: decide upon initial K_P_X
 K_P_Y = 2 # TODO: decide upon initial K_P_Y
 CENTER = (64, 64)
 D = 0
-class LineTracker:@staticmethod
+class LineTracker:
+    @staticmethod
     def conv_vect(v_x, v_y):
         if v_x<0:
           v_x = -1*v_x
