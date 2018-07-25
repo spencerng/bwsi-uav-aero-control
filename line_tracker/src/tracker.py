@@ -7,8 +7,7 @@ import threading
 import numpy as np
 from geometry_msgs.msg import TwistStamped, PoseStamped, Quaternion, Point, Vector3
 from sensor_msgs.msg import Image
-from tf.transformations import quaternion_from_euler, quaternion_matrix
-from aero_control.msg import Line, TrackerParams
+from aero_control.msg import Line
 import cv2
 import mavros
 from mavros_msgs.msg import State
@@ -20,7 +19,7 @@ MAX_SPEED = .5 # [m/s]
 K_P_X = 2 # TODO: decide upon initial K_P_X
 K_P_Y = 2 # TODO: decide upon initial K_P_Y
 CENTER = (64, 64)
-D = 0
+DIST = 50
 class LineTracker:
     @staticmethod
     def conv_vect(v_x, v_y):
@@ -66,7 +65,7 @@ class LineTracker:
         assert rate > 2 # make sure rate is high enough, if new setpoint recieved within .5 seconds, robot will switch back to POSCTL
         self.rate = rospy.Rate(rate)
 
-        mavros.set_namespace()
+        #mavros.set_namespace()
         self.bridge = CvBridge()
 
         self.pub_local_velocity_setpoint = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel", TwistStamped, queue_size=1)
@@ -104,25 +103,26 @@ class LineTracker:
     
             """
 	    vx,vy = self.conv_vect(line_params.vx, line_params.vy)
-            print("Velocities:",vx,vy)
-            xc,yc =  self.find_closest_point(line_params.x, line_params.y, vx, vy)
+        print("Velocities:",vx,vy)
+        xc,yc =  self.find_closest_point(line_params.x, line_params.y, vx, vy)
 
-            print("Point closest to line:",xc,yc)
+        print("Point closest to line:",xc,yc)
         
-            err = self.find_error(xc, yc)
-            print("Error:",err)
+        
+        
 
-	    self.pub_error.publish(Vector3(err[0],err[1],0))
+        
 
-	    pos = self.d_target_position(xc, yc, vx, vy)
-            print("Target point deltas:",pos)
-            print("Actuator Velocities:",self.p_control(pos))
+        pos = self.d_target_position(xc, yc, vx, vy)
+        print("Target point deltas/Error:",pos)
+        self.pub_error.publish(Vector3(pos[0],pos[1],0))
+        print("Actuator Velocities:",self.p_control(pos))
 
-	    self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y = self.p_control(pos)
-	    self.velocity_setpoint.twist.linear.z = 0
-	    self.velocity_setpoint.twist.angular.x = 0
-	    self.velocity_setpoint.twist.angular.y = 0
-            self.velocity_setpoint.twist.angular.z = 0
+        self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y = self.p_control(pos)
+        self.velocity_setpoint.twist.linear.z = 0
+        self.velocity_setpoint.twist.angular.x = 0
+        self.velocity_setpoint.twist.angular.y = 0
+        self.velocity_setpoint.twist.angular.z = 0
             # TODO-START: Create velocity controller based on above specs
             #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
             # TODO-END
