@@ -159,7 +159,7 @@ class LineTracker:
                         velocity_setpoint_limited.twist.linear.z *= MAX_SPEED / speed
 
                     # Publish limited setpoint
-                    self.vel_setpoint_pub.publish(velocity_setpoint_limited)
+                    self.pub_local_velocity_setpoint.publish(velocity_setpoint_limited)
                 self.rate.sleep()
 
         self.offboard_point_streaming_thread = threading.Thread(target=run_streaming)
