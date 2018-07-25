@@ -14,10 +14,12 @@ from mavros_msgs.msg import State
 from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 
+MAX_ANG_SPEED = np.pi/4  #[rad/s]
 NO_ROBOT = False # set to True to test on laptop
-MAX_SPEED = .8 # [m/s]
+MAX_LIN_SPEED = .8 # [m/s]
 K_P_X = 0.05 # TODO: decide upon initial K_P_X
 K_P_Y = 0.01 # TODO: decide upon initial K_P_Y
+K_P_ANG_Z = 0.5
 CENTER = (64, 64)
 DIST = 50
 class LineTracker:
@@ -51,14 +53,17 @@ class LineTracker:
         y_f = yc + DIST*np.sin(theta)
         return(x_f - CENTER[0], y_f - CENTER[1])
     @staticmethod
-    def p_control(pos):
+    def p_control(pos, ang_err):
         vel_cmd_x =  K_P_X * pos[0]
         vel_cmd_y =  -K_P_Y * pos[1] #Set negative due to BU frame of reference compared to downward camera
+        yaw_cmd = - K_P_ANG_Z * ang_err
         speed = np.linalg.norm([vel_cmd_x,vel_cmd_y])
-        if speed > MAX_SPEED:
-            vel_cmd_x *= MAX_SPEED / speed
-            vel_cmd_y *= MAX_SPEED / speed
-        return (vel_cmd_x,vel_cmd_y)
+        if speed > MAX_LIN_SPEED:
+            vel_cmd_x *= MAX_LIN_SPEED / speed
+            vel_cmd_y *= MAX_LIN_SPEED / speed
+        if yaw_cmd > MAX_ANG_SPEED:
+            yaw_cmd = MAX_ANG_SPEED
+        return (vel_cmd_x,vel_cmd_y, yaw_cmd)
     def __init__(self, rate=10):
         """ Initializes publishers and subscribers, sets initial values for vars
         :param rate: the rate at which the setpoint_velocity is published
@@ -112,7 +117,7 @@ class LineTracker:
 
         print("Point closest to line:",xc,yc)
         
-        
+        ang_err = np.arctan(vy/vx)
         
 
         
@@ -120,13 +125,12 @@ class LineTracker:
         pos = self.d_target_position(xc, yc, vx, vy)
         print("Target point deltas/Error:",pos)
         self.pub_error.publish(Vector3(pos[0],pos[1],0))
-        print("Actuator Velocities:",self.p_control(pos))
+        print("Actuator Velocities:",self.p_control(pos, ang_err))
         self.velocity_setpoint = TwistStamped()
-        self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y = self.p_control(pos)
+        self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y, self.velocity_setpoint.twist.angular.z = self.p_control(pos, ang_err)
         self.velocity_setpoint.twist.linear.z = 0
         self.velocity_setpoint.twist.angular.x = 0
         self.velocity_setpoint.twist.angular.y = 0
-        self.velocity_setpoint.twist.angular.z = 0
             # TODO-START: Create velocity controller based on above specs
             #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
             # TODO-END
@@ -157,10 +161,10 @@ class LineTracker:
                     speed = np.linalg.norm([velocity_setpoint_limited.twist.linear.x,
                                             velocity_setpoint_limited.twist.linear.y,
                                             velocity_setpoint_limited.twist.linear.z])
-                    if speed > MAX_SPEED:
-                        velocity_setpoint_limited.twist.linear.x *= MAX_SPEED / speed
-                        velocity_setpoint_limited.twist.linear.y *= MAX_SPEED / speed
-                        velocity_setpoint_limited.twist.linear.z *= MAX_SPEED / speed
+                    if speed > MAX_LIN_SPEED:
+                        velocity_setpoint_limited.twist.linear.x *= MAX_LIN_SPEED / speed
+                        velocity_setpoint_limited.twist.linear.y *= MAX_LIN_SPEED / speed
+                        velocity_setpoint_limited.twist.linear.z *= MAX_LIN_SPEED / speed
 
                     # Publish limited setpoint
                     self.pub_local_velocity_setpoint.publish(velocity_setpoint_limited)
