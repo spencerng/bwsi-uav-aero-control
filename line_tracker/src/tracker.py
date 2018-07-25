@@ -14,10 +14,10 @@ from mavros_msgs.msg import State
 from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 
-NO_ROBOT = True # set to True to test on laptop
-MAX_SPEED = .5 # [m/s]
-K_P_X = 2 # TODO: decide upon initial K_P_X
-K_P_Y = 2 # TODO: decide upon initial K_P_Y
+NO_ROBOT = False # set to True to test on laptop
+MAX_SPEED = .8 # [m/s]
+K_P_X = 0.05 # TODO: decide upon initial K_P_X
+K_P_Y = 0.01 # TODO: decide upon initial K_P_Y
 CENTER = (64, 64)
 DIST = 50
 class LineTracker:
@@ -31,7 +31,8 @@ class LineTracker:
     def find_closest_point(x, y, v_x, v_y):
         m_reg = v_y/v_x
         b_reg = y - m_reg * x
-
+	if m_reg == 0:
+		m_reg = 0.0001
         b_perp = CENTER[1]+CENTER[0]/m_reg
         #This is the point of intersection between the line perpendicular to the received line
         #containing the drone's position and the received line
@@ -102,7 +103,10 @@ class LineTracker:
             Be sure to publish your error using self.pub_error.publish(Vector3(x_error,y_error,0))
     
             """
-	    vx,vy = self.conv_vect(line_params.vx, line_params.vy)
+	
+	vx,vy = self.conv_vect(line_params.vx, line_params.vy)
+	if vx ==0:
+		vx = 0.001
         print("Velocities:",vx,vy)
         xc,yc =  self.find_closest_point(line_params.x, line_params.y, vx, vy)
 

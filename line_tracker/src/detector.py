@@ -64,7 +64,7 @@ class LineDetector:
 		#raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
 		# TODO-END
 		
-		if not _DEBUG:
+		if _DEBUG:
 			try:
 				lefty = int((-x*vy/vx) + y)
 				righty = int(((cols-x)*vy/vx)+y)
