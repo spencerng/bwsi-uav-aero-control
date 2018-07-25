@@ -117,7 +117,7 @@ class LineTracker:
         print("Target point deltas/Error:",pos)
         self.pub_error.publish(Vector3(pos[0],pos[1],0))
         print("Actuator Velocities:",self.p_control(pos))
-
+        self.velocity_setpoint = TwistStamped()
         self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y = self.p_control(pos)
         self.velocity_setpoint.twist.linear.z = 0
         self.velocity_setpoint.twist.angular.x = 0
