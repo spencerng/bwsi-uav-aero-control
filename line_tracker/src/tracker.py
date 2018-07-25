@@ -150,13 +150,13 @@ class LineTracker:
                 if (self.velocity_setpoint is not None):
                     # limit speed for safety
                     velocity_setpoint_limited = deepcopy(self.velocity_setpoint)
-                    speed = np.linalg.norm([velocity_setpoint_limited.linear.x,
-                                            velocity_setpoint_limited.linear.y,
-                                            velocity_setpoint_limited.linear.z])
+                    speed = np.linalg.norm([velocity_setpoint_limited.twist.linear.x,
+                                            velocity_setpoint_limited.twist.linear.y,
+                                            velocity_setpoint_limited.twist.linear.z])
                     if speed > MAX_SPEED:
-                        velocity_setpoint_limited.linear.x *= MAX_SPEED / speed
-                        velocity_setpoint_limited.linear.y *= MAX_SPEED / speed
-                        velocity_setpoint_limited.linear.z *= MAX_SPEED / speed
+                        velocity_setpoint_limited.twist.linear.x *= MAX_SPEED / speed
+                        velocity_setpoint_limited.twist.linear.y *= MAX_SPEED / speed
+                        velocity_setpoint_limited.twist.linear.z *= MAX_SPEED / speed
 
                     # Publish limited setpoint
                     self.vel_setpoint_pub.publish(velocity_setpoint_limited)
