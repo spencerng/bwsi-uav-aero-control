@@ -14,15 +14,16 @@ from mavros_msgs.msg import State
 from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 
-MAX_ANG_SPEED = np.pi/4  #[rad/s]
+MAX_ANG_SPEED = np.pi/2  #[rad/s]
 NO_ROBOT = False # set to True to test on laptop
-MAX_LIN_SPEED = .8 # [m/s]
+MAX_LIN_SPEED = .5 # [m/s]
 K_P_X = 0.05 # TODO: decide upon initial K_P_X
 K_P_Y = 0.01 # TODO: decide upon initial K_P_Y
-K_P_ANG_Z = 0.5
+K_D_Y = 0.0
+K_P_ANG_Z = 1
 K_D_ANG_Z = 0.0
 CENTER = (64, 64)
-DIST = 50
+DIST = 30
 class LineTracker:
     @staticmethod
     def conv_vect(v_x, v_y):
@@ -53,11 +54,12 @@ class LineTracker:
         x_f = xc + DIST*np.cos(theta)
         y_f = yc + DIST*np.sin(theta)
         return(x_f - CENTER[0], y_f - CENTER[1])
-    @staticmethod
-    def pd_control(pos, ang_err):
+
+    def pd_control(self, pos, ang_err):
         vel_cmd_x =  K_P_X * pos[0]
-        vel_cmd_y =  -K_P_Y * pos[1] #Set negative due to BU frame of reference compared to downward camera
-        dt = 1.0/self.rate
+        dt = 1.0/self.rate_hz
+        vel_cmd_y =  -(K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt) #Set negative due to BU frame of reference compared to downward camera
+
         yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt)
         speed = np.linalg.norm([vel_cmd_x,vel_cmd_y])
         if speed > MAX_LIN_SPEED:
@@ -71,9 +73,10 @@ class LineTracker:
         :param rate: the rate at which the setpoint_velocity is published
         """
         assert rate > 2 # make sure rate is high enough, if new setpoint recieved within .5 seconds, robot will switch back to POSCTL
-        self.rate = rospy.Rate(rate)
-
-        #mavros.set_namespace()
+	self.rate_hz = rate        
+	self.rate = rospy.Rate(rate)
+	self.prev_ang_err = 0
+        mavros.set_namespace()
         self.bridge = CvBridge()
 
         self.pub_local_velocity_setpoint = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel", TwistStamped, queue_size=1)
@@ -85,7 +88,7 @@ class LineTracker:
         self.sub_state = rospy.Subscriber("/mavros/state", State, self.state_cb)
         self.current_state = None
         self.offboard_point_streaming = False
-
+	self.prev_y_err = 0.0
         # Setpoint field expressed as the desired velocity of the body-down frame
         #  with respect to the world frame parameterized in the body-down frame
         self.velocity_setpoint = None
@@ -127,13 +130,14 @@ class LineTracker:
         pos = self.d_target_position(xc, yc, vx, vy)
         print("Target point deltas/Error:",pos)
         self.pub_error.publish(Vector3(pos[0],pos[1],ang_err))
-        print("Actuator Velocities:",self.pd_control(pos, ang_err))
+#        print("Actuator Velocities:",self.pd_control(pos, ang_err))
         self.velocity_setpoint = TwistStamped()
         self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y, self.velocity_setpoint.twist.angular.z = self.pd_control(pos, ang_err)
         self.velocity_setpoint.twist.linear.z = 0
         self.velocity_setpoint.twist.angular.x = 0
         self.velocity_setpoint.twist.angular.y = 0
         self.prev_ang_err = ang_err
+	self.prev_y_err = pos[1]
             # TODO-START: Create velocity controller based on above specs
             #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
             # TODO-END
