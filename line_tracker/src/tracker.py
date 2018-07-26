@@ -20,6 +20,7 @@ MAX_LIN_SPEED = .8 # [m/s]
 K_P_X = 0.05 # TODO: decide upon initial K_P_X
 K_P_Y = 0.01 # TODO: decide upon initial K_P_Y
 K_P_ANG_Z = 0.5
+K_D_ANG_Z = 0.0
 CENTER = (64, 64)
 DIST = 50
 class LineTracker:
@@ -53,10 +54,11 @@ class LineTracker:
         y_f = yc + DIST*np.sin(theta)
         return(x_f - CENTER[0], y_f - CENTER[1])
     @staticmethod
-    def p_control(pos, ang_err):
+    def pd_control(pos, ang_err):
         vel_cmd_x =  K_P_X * pos[0]
         vel_cmd_y =  -K_P_Y * pos[1] #Set negative due to BU frame of reference compared to downward camera
-        yaw_cmd = - K_P_ANG_Z * ang_err
+        dt = 1.0/self.rate
+        yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt)
         speed = np.linalg.norm([vel_cmd_x,vel_cmd_y])
         if speed > MAX_LIN_SPEED:
             vel_cmd_x *= MAX_LIN_SPEED / speed
@@ -125,12 +127,13 @@ class LineTracker:
         pos = self.d_target_position(xc, yc, vx, vy)
         print("Target point deltas/Error:",pos)
         self.pub_error.publish(Vector3(pos[0],pos[1],ang_err))
-        print("Actuator Velocities:",self.p_control(pos, ang_err))
+        print("Actuator Velocities:",self.pd_control(pos, ang_err))
         self.velocity_setpoint = TwistStamped()
-        self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y, self.velocity_setpoint.twist.angular.z = self.p_control(pos, ang_err)
+        self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y, self.velocity_setpoint.twist.angular.z = self.pd_control(pos, ang_err)
         self.velocity_setpoint.twist.linear.z = 0
         self.velocity_setpoint.twist.angular.x = 0
         self.velocity_setpoint.twist.angular.y = 0
+        self.prev_ang_err = ang_err
             # TODO-START: Create velocity controller based on above specs
             #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
             # TODO-END
