@@ -5,6 +5,7 @@ from __future__ import division, print_function
 import rospy
 import threading
 import numpy as np
+import datetime
 from geometry_msgs.msg import TwistStamped, PoseStamped, Quaternion, Point, Vector3
 from sensor_msgs.msg import Image
 from aero_control.msg import Line
@@ -65,12 +66,7 @@ class LineTracker:
 		vel_cmd_y =  -(K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt  + K_I_Y * self.sum_y_err) #Set negative due to BU frame of reference compared to downward camera
 
 		yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt + K_I_ANG_Z * self.sum_ang_err)
-		speed = np.linalg.norm([vel_cmd_x,vel_cmd_y])
-		if speed > MAX_LIN_SPEED:
-			vel_cmd_x *= MAX_LIN_SPEED / speed
-			vel_cmd_y *= MAX_LIN_SPEED / speed
-		if yaw_cmd > MAX_ANG_SPEED:
-			yaw_cmd = MAX_ANG_SPEED
+		
 		return (vel_cmd_x,vel_cmd_y, yaw_cmd)
 	def __init__(self, rate=10):
 		""" Initializes publishers and subscribers, sets initial values for vars
@@ -179,10 +175,14 @@ class LineTracker:
 						velocity_setpoint_limited.twist.linear.x *= MAX_LIN_SPEED / speed
 						velocity_setpoint_limited.twist.linear.y *= MAX_LIN_SPEED / speed
 						velocity_setpoint_limited.twist.linear.z *= MAX_LIN_SPEED / speed
-
+					yaw_cmd = self.velocity_setpoint_limited.twist.angular.z 
+					if math.abs(yaw_cmd) > MAX_ANG_SPEED:
+						yaw_cmd = np.sign(yaw_cmd) * MAX_ANG_SPEED
+					self.velocity_setpoint_limited.twist.angular.z  = yaw_cmd
 					# Publish limited setpoint
 					self.pub_local_velocity_setpoint.publish(velocity_setpoint_limited)
 				self.rate.sleep()
+				
 
 		self.offboard_point_streaming_thread = threading.Thread(target=run_streaming)
 		self.offboard_point_streaming_thread.start()
