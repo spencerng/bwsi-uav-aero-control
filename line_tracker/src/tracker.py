@@ -38,8 +38,8 @@ class LineTracker:
 	def find_closest_point(x, y, v_x, v_y):
 		m_reg = v_y/v_x
 		b_reg = y - m_reg * x
-	if m_reg == 0:
-		m_reg = 0.0001
+		if m_reg == 0:
+			m_reg = 0.0001
 		b_perp = CENTER[1]+CENTER[0]/m_reg
 		#This is the point of intersection between the line perpendicular to the received line
 		#containing the drone's position and the received line
@@ -64,7 +64,7 @@ class LineTracker:
 		dt = 1.0/self.rate_hz
 		vel_cmd_y =  -(K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt  + K_I_Y * self.sum_y_err) #Set negative due to BU frame of reference compared to downward camera
 
-		yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt + K_I_ANG_Z = self.sum_ang_err)
+		yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt + K_I_ANG_Z * self.sum_ang_err)
 		speed = np.linalg.norm([vel_cmd_x,vel_cmd_y])
 		if speed > MAX_LIN_SPEED:
 			vel_cmd_x *= MAX_LIN_SPEED / speed
