@@ -19,8 +19,8 @@ from mavros_msgs.msg import State
 ###########################################################################################################################
 
 #X,Y,Z,YAW
-_DIST_TO_OBST = {24:[0.0,0.0,0.0,0.0],12:[0.0,0.0,0.0,0.0], 9:[0.0, 0.0, 0.0, 0.0]} 
-raise Exception("Decide on how far away from the tag you want to be!!")
+_DIST_TO_OBST = {15:[0.0,0.0,-15.0,0.0],12:[0.0,0.0,0.0,0.0], 9:[0.0, 0.0, 0.0, 0.0]} 
+#raise Exception("Decide on how far away from the tag you want to be!!")
 
 ###########################################################################################################################
 # TODO: add desired sequence of obstacles, should match course
@@ -55,7 +55,7 @@ class ARObstacleController:
 		self.local_pose_sub = rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.local_pose_cb)
 		self.local_pose_sp_pub = rospy.Publisher("/mavros/setpoint_position/local", PoseStamped, queue_size=1)
 		self.local_vel_sp_pub = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel", TwistStamped, queue_size=1)
-
+		self.pose_error_pub = rospy.Publisher("/ar_obstacle/error", Twist, queue_size=1)
 		self.ar_pose_sub = rospy.Subscriber("/ar_aero_pose", AlvarMarkers, self.ar_pose_cb)
 
 		self.obstacles = {12 : 3, 24 : 2, 9: 4} # dict (marker -> mode)
@@ -198,7 +198,12 @@ class ARObstacleController:
 		z_error = target_marker.pose.pose.z - _DIST_TO_OBST[target_marker.id][2]
 		yaw_error = curr_yaw - _DIST_TO_OBST[target_marker.id][3]
 		#raise Exception("calculate errors and delete this!!")
-
+		twist_error = Twist()
+		twist_error.linear.x = x_error
+		twist_error.linear.y = y_error
+		twist_error.linear.z = z_error
+		twist_error.angular.z = yaw_error
+		self.pose_error_pub(twist_error)
 		if _DEBUG: rospy.loginfo("error: x: %.04f y: %.04f z: %.04f yaw %.04f" % (x_error, y_error, z_error, yaw_error))
 
 		if abs(x_error) < 0.1 and abs(y_error) < 0.1 and abs(z_error) < 0.1: # we can start flying thru
@@ -219,9 +224,9 @@ class ARObstacleController:
 # TODO: decide how long / at what vel to go up/forward to avoid ring
 ###########################################################################################################################
 
-		t_up = None
-		t_forward = None
-		raise Exception("ring avoid times!!")
+		t_up = 0.5
+		t_forward = 0.5
+		#raise Exception("ring avoid times!!")
 		if td.total_seconds() < t_up:
 			# Add to vel hist here!!
 			rospy.loginfo("ring avoid: going up!")
@@ -241,10 +246,10 @@ class ARObstacleController:
 ###########################################################################################################################
 # TODO: decide how long / at what vel to go up/forward to avoid hurdle
 ###########################################################################################################################
-		t_up = None
-		t_forward = None
+		t_up = 0.5
+		t_forward = 0.5
 
-		raise Exception("hurdle avoid times!")
+		#raise Exception("hurdle avoid times!")
 		if td.total_seconds() < t_up:
 			# add to vel_hist here!! (insert at zero)
 			if _DEBUG: rospy.loginfo("hurdle avoid: going up!")
