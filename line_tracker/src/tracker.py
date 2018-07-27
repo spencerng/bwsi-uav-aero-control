@@ -15,18 +15,18 @@ from mavros_msgs.msg import State
 from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 
-NO_ROBOT = False # set to True to test on laptop
+NO_ROBOT = True # set to True to test on laptop
 MAX_ANG_SPEED = np.pi/2  #[rad/s]
 MAX_LIN_SPEED = .5 # [m/s]
-K_P_X = 0.5 # TODO: decide upon initial K_P_X
-K_P_Y = 0.3 # TODO: decide upon initial K_P_Y
-K_D_Y = 0.0
+K_P_X = 0.05 # TODO: decide upon initial K_P_X
+K_P_Y = 0.02 # TODO: decide upon initial K_P_Y
+K_D_Y = 0.012
 K_I_Y = 0.0
 K_P_ANG_Z = 1.5
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
 CENTER = (64, 64)
-DIST = 20
+DIST = 50
 
 class LineTracker:
 	@staticmethod
@@ -175,10 +175,10 @@ class LineTracker:
 						velocity_setpoint_limited.twist.linear.x *= MAX_LIN_SPEED / speed
 						velocity_setpoint_limited.twist.linear.y *= MAX_LIN_SPEED / speed
 						velocity_setpoint_limited.twist.linear.z *= MAX_LIN_SPEED / speed
-					yaw_cmd = self.velocity_setpoint_limited.twist.angular.z 
-					if math.abs(yaw_cmd) > MAX_ANG_SPEED:
+					yaw_cmd = velocity_setpoint_limited.twist.angular.z 
+					if np.absolute(yaw_cmd) > MAX_ANG_SPEED:
 						yaw_cmd = np.sign(yaw_cmd) * MAX_ANG_SPEED
-					self.velocity_setpoint_limited.twist.angular.z  = yaw_cmd
+					velocity_setpoint_limited.twist.angular.z  = yaw_cmd
 					# Publish limited setpoint
 					self.pub_local_velocity_setpoint.publish(velocity_setpoint_limited)
 				self.rate.sleep()
