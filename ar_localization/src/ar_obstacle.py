@@ -17,6 +17,8 @@ from mavros_msgs.msg import State
 ###########################################################################################################################
 # TODO: decide on points at which you want to hover in front of obstacles before flying through
 ###########################################################################################################################
+
+#X,Y,Z,YAW
 _DIST_TO_OBST = {24:[0.0,0.0,0.0,0.0],12:[0.0,0.0,0.0,0.0], 9:[0.0, 0.0, 0.0, 0.0]} 
 raise Exception("Decide on how far away from the tag you want to be!!")
 
@@ -191,11 +193,11 @@ class ARObstacleController:
 # TODO: calculate errors from desired pose/current pose
 ###########################################################################################################################
 
-		x_error = None
-		y_error = None
-		z_error = None
-		yaw_error = None
-		raise Exception("calculate errors and delete this!!")
+		x_error = target_marker.pose.pose.x - _DIST_TO_OBST[target_marker.id][0]
+		y_error = target_marker.pose.pose.y - _DIST_TO_OBST[target_marker.id][1]
+		z_error = target_marker.pose.pose.z - _DIST_TO_OBST[target_marker.id][2]
+		yaw_error = curr_yaw - _DIST_TO_OBST[target_marker.id][3]
+		#raise Exception("calculate errors and delete this!!")
 
 		if _DEBUG: rospy.loginfo("error: x: %.04f y: %.04f z: %.04f yaw %.04f" % (x_error, y_error, z_error, yaw_error))
 
@@ -323,12 +325,13 @@ class ARObstacleController:
 ############################################################################################################################
 # TODO: Convert 'bu' velocity to 'lenu' velocity
 ###########################################################################################################################
-		raise Exception("Convert the bu velocity to the lenu velocity!!")
+		velsp_bu_lenu__lenu = get_lenu_velocity(self.q_bu_lenu, velsp__fin, fin)
+		#raise Exception("Convert the bu velocity to the lenu velocity!!")
 		return vel_msg
 
 ###########################################################################################################################
 # DO NOT MODIFY BELOW THIS COMMENT
-###########################################################################################################################
+############################################f###############################################################################
 			   
 	def start_streaming_offboard_vel(self):
 		def run_streaming():
