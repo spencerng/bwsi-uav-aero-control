@@ -58,7 +58,7 @@ class ARObstacleController:
 		self.pose_error_pub = rospy.Publisher("/ar_obstacle/error", Twist, queue_size=1)
 		self.ar_pose_sub = rospy.Subscriber("/ar_aero_pose", AlvarMarkers, self.ar_pose_cb)
 
-		self.obstacles = {12 : 3, 24 : 2, 9: 4} # dict (marker -> mode)
+		self.obstacles = {15 : 3, 24 : 2, 9: 4} # dict (marker -> mode)
 		self.rate = rospy.Rate(hz)
 		self.current_state = State()
 		self.current_pose = None
