@@ -26,6 +26,8 @@ K_I_Y = 0.0
 K_P_ANG_Z = 1.5
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
+BIAS_XY = 0.2 #how much to fly in each direction when avoiding obstacles
+BIAS_Z = 1.0
 CENTER = (64, 64)
 DIST = 50
 MAX_DIST_TO_OBSTACLE = 1.5
@@ -91,15 +93,15 @@ class LineTracker:
 	
 	def posZ(self, identifier, pos, ang_err):# diagonal fly forward: get into position
         pid_x, pid_y, pid_yaw = self.pid_control(pos, ang_err)
-        self.velocity_setpoint.twist.linear.x = pid_x
-		self.velocity_setpoint.twist.linear.y = pid_y
+        self.velocity_setpoint.twist.linear.x = pid_x * BIAS_XY
+		self.velocity_setpoint.twist.linear.y = pid_y * BIAS_XY
 		self.velocity_setpoint.twist.angular.z = pid_yaw
         z_err = DISTANCES[identifier] - self.current_marker.pose.pose.position.y
-		self.velocity_setpoint.twist.linear.z = self.z_control(z_err)
+		self.velocity_setpoint.twist.linear.z = self.z_control(z_err) * BIAS_Z
 		#TODO
 		#if X distance is very small in BU (or Z in FC) to AR tag, X velocity in BU should be minimal
 		#Possible solution: heavily bias Z error in final velocity vector
-        return z_err
+        return abs(z_err)
 		'''
 		Done = TODO ******************************************************************
 		'''
@@ -160,12 +162,15 @@ class LineTracker:
 			self.velocity_setpoint.twist.angular.z = pid_yaw
 			self.velocity_setpoint.twist.linear.z = 0
 		else:	
-            err = 1		# ready to start avoidance
-			while(err >= TOL):
+            err = 10000000000		# ready to start avoidance
+            iterations = 0
+			while(err > TOL) and self.current_marker is not None:
                 err = self.posZ(self.current_marker.id, pos, ang_err) # get into position
                 self.pub_error_z.publish(err)
+                self.current_marker = None
             #should implement some sort of timeout here, in case AR tag is no longer visible?
-			self.fly(self.current_marker.id) #fly through/around obstacle
+			if err <= TOL:
+				self.fly(self.current_marker.id) #fly through/around obstacle
             #--
         	# RESET position and marker
             self.reset_pos(self.current_marker.id, pos, ang_err)
@@ -299,6 +304,7 @@ class LineTracker:
 					# Publish limited setpoint
 					self.pub_local_velocity_setpoint.publish(velocity_setpoint_limited)
 				self.rate.sleep()
+				self.pub_local_velocity_setpoint.publish(Twist())
 				#set default, no line detected behavior here
 				
 
