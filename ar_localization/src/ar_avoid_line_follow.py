@@ -30,7 +30,7 @@ CENTER = (64, 64)
 DIST = 50
 MAX_DIST_TO_OBSTACLE = 1.5
 TOL = 0.1
-DISTANCES = {9:2.0,12:2.0,24:2.0} # height distance +z in 'bu' or -y in 'fc'  TODO - set distances.
+DISTANCES = {9:2.0,12:2.0,24:2.0} # height distance +z of hole relative to AR tag in 'bu' or -y in 'fc'  TODO - set distances.
 FWD_DISTANCES = {9:0.4,12:0.4,24:0.4} 
 _SPEED = 0.5 # Fly through/around obstacle and reset position speed - still limited by MAX_LIN_SPEED
 
@@ -76,7 +76,7 @@ class LineTracker:
         return (vel_cmd_x,vel_cmd_y, yaw_cmd)
 
     def z_control(self, z_err):
-        return K_P_Z * pos[2]
+        return K_P_Z * z_err
 
 	def check_dist(self):
 		'''
@@ -86,18 +86,19 @@ class LineTracker:
 		return marker.pose.pose.position.z
         
 	def within_range(self):
-		if (self.check_dist() - MAX_DIST_TO_OBSTACLE) < TOL:
-			return True
-		else:
-			return False
+		return (self.current_marker is not None) and (self.check_dist() - MAX_DIST_TO_OBSTACLE) < TOL:
+			
 	
-	def posZ(self, identity, pos, ang_err):# diagonal fly forward: get into position
+	def posZ(self, identifier, pos, ang_err):# diagonal fly forward: get into position
         pid_x, pid_y, pid_yaw = self.pid_control(pos, ang_err)
         self.velocity_setpoint.twist.linear.x = pid_x
 		self.velocity_setpoint.twist.linear.y = pid_y
 		self.velocity_setpoint.twist.angular.z = pid_yaw
-        z_err = DISTANCES[identity] - self.current_marker.pose.pose.position.y
+        z_err = DISTANCES[identifier] - self.current_marker.pose.pose.position.y
 		self.velocity_setpoint.twist.linear.z = self.z_control(z_err)
+		#TODO
+		#if X distance is very small in BU (or Z in FC) to AR tag, X velocity in BU should be minimal
+		#Possible solution: heavily bias Z error in final velocity vector
         return z_err
 		'''
 		Done = TODO ******************************************************************
@@ -115,7 +116,7 @@ class LineTracker:
             self.velocity_setpoint.twist.linear.z = 0
             self.velocity_setpoint.twist.angular.x = 0
             self.velocity_setpoint.twist.angular.y = 0
-            self.velocity_setpoint.twist.angular.z = 0
+            self.velocity_setpoint.twist.angular.z = 0 #should we correct yaw based on position?
         while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and self.current_state.mode == 'OFFBOARD':
             # Note: we don't actually have to call the publish command here.
             # Publish velocity command is automatically done in run_streaming function which is running in parallel
@@ -162,8 +163,8 @@ class LineTracker:
             err = 1		# ready to start avoidance
 			while(err >= TOL):
                 err = self.posZ(self.current_marker.id, pos, ang_err) # get into position
-                self.pub_error2.publish(err)
-            #--
+                self.pub_error_z.publish(err)
+            #should implement some sort of timeout here, in case AR tag is no longer visible?
 			self.fly(self.current_marker.id) #fly through/around obstacle
             #--
         	# RESET position and marker
@@ -185,7 +186,7 @@ class LineTracker:
 		self.pub_local_velocity_setpoint = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel", TwistStamped, queue_size=1)
 		self.sub_line_param = rospy.Subscriber("/line_detection/line", Line, self.line_param_cb)
 		self.pub_error = rospy.Publisher("/line_detection/error", Vector3, queue_size=1)
-        self.pub_error2 = rospy.Publisher("/line_detection/Zerror", float, queue_size=1)
+        self.pub_error_z = rospy.Publisher("/line_detection/Zerror", float, queue_size=1)
 		'''	Initializes a subscriber for AR tracking'''
 		self.ar_pose_sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, self.ar_pose_cb)
 		self.current_marker = None
@@ -298,6 +299,7 @@ class LineTracker:
 					# Publish limited setpoint
 					self.pub_local_velocity_setpoint.publish(velocity_setpoint_limited)
 				self.rate.sleep()
+				#set default, no line detected behavior here
 				
 
 		self.offboard_point_streaming_thread = threading.Thread(target=run_streaming)
