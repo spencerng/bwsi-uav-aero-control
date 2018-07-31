@@ -30,10 +30,10 @@ BIAS_XY = 0.0 #how much to fly in each direction when avoiding obstacles
 BIAS_Z = 1.0
 CENTER = (64, 64)
 DIST = 50
-MAX_DIST_TO_OBSTACLE = 1.0
+MAX_DIST_TO_OBSTACLE = 1.25
 TOL = 0.1
 DISTANCES = {9:(0.0,0.0,-1.0),12:(0.0,0.0,1.0),24:(0.0,0.0,1.0), 16:(0.0,0.0,1.0)} # height distance +z of hole relative to AR tag in 'bu' or -y in 'fc'  TODO - set distances.
-FWD_DISTANCES = {9:0.75,12:0.75,24:0.75,16:0.75} 
+FWD_DISTANCES = {9:2.25,12:2.25,24:2.25,16:2.25} 
 _SPEED = 0.5 # Fly through/around obstacle and reset position speed - still limited by MAX_LIN_SPEED
 
 class LineTracker:
@@ -130,7 +130,7 @@ class LineTracker:
 		# Record the start time
 		start_time = datetime.datetime.now()
 		 # Publish command velocites for timedelta seconds
-		self.velocity_setpoint.twist.linear.x = _SPEED
+		self.velocity_setpoint.twist.linear.x = -_SPEED
 		self.velocity_setpoint.twist.linear.y = 0
 		self.velocity_setpoint.twist.linear.z = 0
 		self.velocity_setpoint.twist.angular.x = 0
@@ -258,7 +258,9 @@ class LineTracker:
 		'''
 		self.current_marker = None
 		if len(msg.markers) > 0:
-			rospy.loginfo("AR marker(s) received")
+			for marker in msg.markers:
+				if marker.id in DISTANCES.keys():
+					rospy.loginfo("AR marker(s) received")
 			min_dist = msg.markers[0].pose.pose.position.z
 			self.current_marker = msg.markers[0]
 			for marker in msg.markers:
