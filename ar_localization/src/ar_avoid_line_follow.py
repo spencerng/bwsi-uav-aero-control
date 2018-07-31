@@ -15,7 +15,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 
-NO_ROBOT = True # set to True to test on laptop
+NO_ROBOT = False # set to True to test on laptop
 MAX_ANG_SPEED = np.pi/2  #[rad/s]
 MAX_LIN_SPEED = .5 # [m/s]
 K_P_X = 0.05 # TODO: decide upon initial K_P_X
@@ -30,9 +30,9 @@ BIAS_XY = 0.0 #how much to fly in each direction when avoiding obstacles
 BIAS_Z = 1.0
 CENTER = (64, 64)
 DIST = 50
-MAX_DIST_TO_OBSTACLE = 2.25
+MAX_DIST_TO_OBSTACLE = 1.0
 TOL = 0.1
-DISTANCES = {9:(0.0,0.0,2.0),12:(0.0,0.0,2.0),24:(0.0,0.0,2.0), 16:(0.0,0.0,2.0)} # height distance +z of hole relative to AR tag in 'bu' or -y in 'fc'  TODO - set distances.
+DISTANCES = {9:(0.0,0.0,1.0),12:(0.0,0.0,1.0),24:(0.0,0.0,1.0), 16:(0.0,0.0,1.0)} # height distance +z of hole relative to AR tag in 'bu' or -y in 'fc'  TODO - set distances.
 FWD_DISTANCES = {9:0.4,12:0.4,24:0.4,16:0.4} 
 _SPEED = 0.5 # Fly through/around obstacle and reset position speed - still limited by MAX_LIN_SPEED
 
@@ -87,27 +87,34 @@ class LineTracker:
 		return marker.pose.pose.position.z
         
 	def within_range(self):
-		return (self.current_marker is not None) and abs(self.check_dist() - MAX_DIST_TO_OBSTACLE) < TOL
+		if self.current_marker is None:
+			pass
+		else:
+			rospy.loginfo("Distance to obstacle: " + str(abs(self.check_dist())))
+		return ((self.current_marker is not None) and (abs(self.check_dist()) < MAX_DIST_TO_OBSTACLE))
 			
 	
-	def fly_up_obstacle(self, identifier, pos, ang_err):# diagonal fly forward: get into position
+	def fly_up_obstacle(self, identity, pos, ang_err):# diagonal fly forward: get into position
 	        # timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
-		duration = DISTANCES[identifier][2]/_SPEED
+		self.isflying_up = True
+		rospy.loginfo("FLying up")
+		duration = DISTANCES[identity][2]/_SPEED
 		timedelta = datetime.timedelta(seconds = duration)
 		# Record the start time
 		start_time = datetime.datetime.now()
 		# Publish command velocites for timedelta seconds
-		self.velocity_setpoint.twist.linear.z = -_SPEED 
+		self.velocity_setpoint.twist.linear.z = _SPEED 
 		self.velocity_setpoint.twist.angular.x = 0
 		self.velocity_setpoint.twist.angular.y = 0
-		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and self.current_state.mode == 'OFFBOARD':
+		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and (NO_ROBOT or self.current_state.mode == 'OFFBOARD'):
 		    pid_x, pid_y, pid_yaw = self.pid_control(pos, ang_err)
-		    self.velocity_setpoint.twist.linear.x = pid_X * BIAS_XY
+		    self.velocity_setpoint.twist.linear.x = pid_x * BIAS_XY
 		    self.velocity_setpoint.twist.linear.y = pid_y * BIAS_XY
-		    self.velocity_setpoint.twist.angular.z = pid_yaw
+		    self.velocity_setpoint.twist.angular.z = pid_yaw  * BIAS_XY
+		    rospy.loginfo("flying_up")
 		    self.rate.sleep()
 		# at end of maneuver, set setpoint back to zero
-		self.velocity_setpoint = TwistStamped()
+		self.isflying_up = False
 		#TODO
 		#if X distance is very small in BU (or Z in FC) to AR tag, X velocity in BU should be minimal
 		#Possible solution: heavily bias Z error in final velocity vector
@@ -115,9 +122,9 @@ class LineTracker:
 		'''
 		Done = TODO ******************************************************************
 		'''
-	
-	def fly_forward(self, identity): # fly through/around obstacle
 		# timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
+		self.isflying_forward = True
+		rospy.loginfo("Flying forward")
 		duration = FWD_DISTANCES[identity]/_SPEED
 		timedelta = datetime.timedelta(seconds = duration)
 		# Record the start time
@@ -129,19 +136,19 @@ class LineTracker:
 		self.velocity_setpoint.twist.angular.x = 0
 		self.velocity_setpoint.twist.angular.y = 0
 		self.velocity_setpoint.twist.angular.z = 0 #should we correct yaw based on position?
-		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and self.current_state.mode == 'OFFBOARD':
+		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and  (NO_ROBOT or self.current_state.mode == 'OFFBOARD'):
 		    # Note: we don't actually have to call the publish command here.
 		    # Publish velocity command is automatically done in run_streaming function which is running in parallel
 		    # and just publishes whatever is stored in self.velocity_setpoint
+		    rospy.loginfo("flying_fwd")
 		    self.rate.sleep()
 		# at end of maneuver, set setpoint back to zero
-		self.velocity_setpoint = TwistStamped()
+		self.isflying_forward = False
 		'''
 		Done = TODO move fwd_distances in x *************
 		'''
-
-	def reset_pos(self, identity, pos, ang_err): #diagonal segway into line_follow flightpath
 		# timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
+		self.isflying_reset = True
 		duration = DISTANCES[identity][2]/_SPEED
 		timedelta = datetime.timedelta(seconds = duration)
 		# Record the start time
@@ -150,18 +157,27 @@ class LineTracker:
 		self.velocity_setpoint.twist.linear.z = -_SPEED
 		self.velocity_setpoint.twist.angular.x = 0
 		self.velocity_setpoint.twist.angular.y = 0
-		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and self.current_state.mode == 'OFFBOARD':
+		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and  (NO_ROBOT or self.current_state.mode == 'OFFBOARD'):
 		    pid_x, pid_y, pid_yaw = self.pid_control(pos, ang_err)
-		    self.velocity_setpoint.twist.linear.x = pid_X
-		    self.velocity_setpoint.twist.linear.y = pid_y
-		    self.velocity_setpoint.twist.angular.z = pid_yaw
+		    self.velocity_setpoint.twist.linear.x = pid_x * BIAS_XY
+		    self.velocity_setpoint.twist.linear.y = pid_y * BIAS_XY
+		    self.velocity_setpoint.twist.angular.z = pid_yaw * BIAS_XY
+		    rospy.loginfo("flying_reset")
 		    self.rate.sleep()
+
 		# at end of maneuver, set setpoint back to zero
-		self.velocity_setpoint = TwistStamped()
+		self.isflying_reset = False
 		'''
 		TODO possibly use distance sensor ******************************************************************
 		'''
 	        self.current_marker = None
+		rospy.loginfo("Marker_reset")
+		self.velocity_setpoint = TwistStamped()
+	#def fly_forward(self, identity): # fly through/around obstacle
+		
+
+	#def reset_pos(self, identity, pos, ang_err): #diagonal segway into line_follow flightpath
+		
 
 
 		
@@ -181,7 +197,7 @@ class LineTracker:
 		self.pub_error = rospy.Publisher("/line_detection/error", Vector3, queue_size=1)
 	        self.pub_error_ar_tag = rospy.Publisher("/line_detection/Zerror", Vector3, queue_size=1)
 		'''	Initializes a subscriber for AR tracking'''
-		self.ar_pose_sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, self.ar_pose_cb)
+		self.ar_pose_sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, self.ar_pose_cb, queue_size = 1)
 		self.current_marker = None
 
 		# Variables dealing with publishing setpoint
@@ -191,42 +207,56 @@ class LineTracker:
 		self.prev_y_err = 0.0
 		self.sum_y_err = 0.0
 		self.sum_ang_err = 0.0
+		self.pos = (0,0,0)
+		self.ang_err = 0
+		self.isflying_up = False
+		self.isflying_forward = False
+		self.isflying_reset = False
+
 		# Setpoint field expressed as the desired velocity of the body-down frame
 		#  with respect to the world frame parameterized in the body-down frame
-		self.velocity_setpoint = None
+		self.velocity_setpoint = TwistStamped()
+		self.start_streaming_offboard_points()
+		#self.fly_up_obstacle(16, (0,0,0), 0)
 
 		while not rospy.is_shutdown() and self.current_state == None:
 			pass  # Wait for connection
 	def vel_ctrl(self):
 #		print("Target point deltas/Error:",pos)
 		
-		self.pub_error.publish(Vector3(self.pos[0],self.pos[1],ang_err))
+		self.pub_error.publish(Vector3(self.pos[0],self.pos[1],self.ang_err))
 		self.sum_y_err += self.pos[1]/10
-		self.sum_ang_err += ang_err
+		self.sum_ang_err += self.ang_err
 	#       print("Actuator Velocities:",self.pid_control(pos, ang_err))
 		self.velocity_setpoint = TwistStamped()
 		pid_x, pid_y, pid_yaw = self.pid_control(self.pos, self.ang_err)
-		if(not self.within_range()): #line_tracking
+		if(not self.within_range()and not (self.isflying_up or self.isflying_forward or self.isflying_reset)): #line_tracking
 			self.velocity_setpoint.twist.linear.x = pid_x
 			self.velocity_setpoint.twist.linear.y = pid_y
 			self.velocity_setpoint.twist.angular.z = pid_yaw
 			self.velocity_setpoint.twist.linear.z = 0
-		else:
-			self.fly_up_obstacle(self.current_marker.id, pos, ang_err)
-			self.fly_forward(self.current_marker.id) #fly through/around obstacle
-					    #--
+		elif self.current_marker is not None:
+			rospy.loginfo("Attempting open loop control")
+			if not (self.isflying_up or self.isflying_forward or self.isflying_reset):
+				self.fly_up_obstacle(self.current_marker.id, self.pos, self.ang_err)
+			#if not self.isflying_up:
+			#	self.fly_forward(self.current_marker.id) #fly through/around obstacle
+			#if not (self.isflying_forward or self.isflying_up):
 						# RESET position and marker
-			self.reset_pos(self.current_marker.id, pos, ang_err)
+			#	self.reset_pos(self.current_marker.id, self.pos, self.ang_err)
+			self.current_marker = None
 		     
-			ready = False
-		self.prev_ang_err = ang_err
-		self.prev_y_err = pos[1]
-		self.ang_err = 0
-		self.pos = (0,0,0)
+			
+		self.prev_ang_err = self.ang_err
+		self.prev_y_err = self.pos[1]
+		if not (self.isflying_forward or self.isflying_up or self.isflying_reset):
+			self.ang_err = 0
+			self.pos = (0,0,0)
 	def ar_pose_cb(self, msg):
 		'''
 		Filtering incoming AR message to determine where drone is relative to tag
 		'''
+		self.current_marker = None
 		if len(msg.markers) > 0:
 			rospy.loginfo("AR marker(s) received")
 			min_dist = msg.markers[0].pose.pose.position.z
@@ -241,8 +271,9 @@ class LineTracker:
 			i = self.current_marker.id
 				
 			err = Vector3(ar_tag_pos.z-DISTANCES[i][0],ar_tag_pos.x-DISTANCES[i][1],ar_tag_pos.y-DISTANCES[i][2])
-				rospy.loginfo(err)
-			self.pub_error_ar_tag.publish(err)				
+			rospy.loginfo(err)
+			self.pub_error_ar_tag.publish(err)
+			self.vel_ctrl()				
 
 
 	def line_param_cb(self, line_params):
@@ -274,8 +305,8 @@ class LineTracker:
 			self.ang_err = np.arctan(vy/vx)
 
 			self.pos = self.d_target_position(xc, yc, vx, vy)
-
-			#self.vel_ctrl(pos,ang_err)
+			if not (self.isflying_up or self.isflying_forward or self.isflying_reset):
+				self.vel_ctrl()
 		
 			# TODO-START: Create velocity controller based on above specs
 			#raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
@@ -299,8 +330,10 @@ class LineTracker:
 		"""
 		def run_streaming():
 			self.offboard_point_streaming = True
-			while (not rospy.is_shutdown()) and self.offboard_point_streaming:
-				self.vel_ctrl()
+			rospy.loginfo("Streaming")
+			self.vel_ctrl()
+			while ((not rospy.is_shutdown()) and self.offboard_point_streaming) or NO_ROBOT:
+				
 				if (self.velocity_setpoint is not None):
 					# limit speed for safety
 					velocity_setpoint_limited = deepcopy(self.velocity_setpoint)

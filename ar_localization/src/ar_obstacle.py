@@ -98,10 +98,7 @@ class ARObstacleController:
         if self.t_marker_last_seen is not None and self.finite_state < 2:
             self.td = datetime.now() - self.t_marker_last_seen
             if self.td.total_seconds() > 1: 
-###########################################################################################################################
-# TODO: Decide which finite state to enter when you've lost the AR tags
-###########################################################################################################################
-                raise Exception("Correct the finite state here!")
+                raise Exception("Marker lost!")
 
         if mode != 0:
             self.finite_state = mode

@@ -71,7 +71,7 @@ class LineDetector:
 				img_color = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 				cv2.line(img_color,(cols-1,righty),(0,lefty),(255,0,0),2)
 				self.image_pub.publish(self.bridge.cv2_to_imgmsg(img_color, "rgb8"))
-				print (x,y,vx,vy)
+#				print (x,y,vx,vy)
 			except CvBridgeError as e:
 				print(e)
 		return (x,y,vx,vy)
@@ -83,10 +83,10 @@ class LineDetector:
 		
 		line = self.parameterizeLine(self.bridge.imgmsg_to_cv2(data, "8UC1"))
 		
-		print(line)
+#		print(line)
 		if line is not None:
-			print("Imgage sending")
-			rospy.loginfo("Message sending")
+			#print("Imgage sending")
+#			rospy.loginfo("Message sending")
 			x, y, vx, vy = line
 			msg = Line()
 			msg.x=x
