@@ -32,8 +32,8 @@ CENTER = (64, 64)
 DIST = 50
 MAX_DIST_TO_OBSTACLE = 1.0
 TOL = 0.1
-DISTANCES = {9:(0.0,0.0,1.0),12:(0.0,0.0,1.0),24:(0.0,0.0,1.0), 16:(0.0,0.0,1.0)} # height distance +z of hole relative to AR tag in 'bu' or -y in 'fc'  TODO - set distances.
-FWD_DISTANCES = {9:0.4,12:0.4,24:0.4,16:0.4} 
+DISTANCES = {9:(0.0,0.0,-1.0),12:(0.0,0.0,1.0),24:(0.0,0.0,1.0), 16:(0.0,0.0,1.0)} # height distance +z of hole relative to AR tag in 'bu' or -y in 'fc'  TODO - set distances.
+FWD_DISTANCES = {9:0.75,12:0.75,24:0.75,16:0.75} 
 _SPEED = 0.5 # Fly through/around obstacle and reset position speed - still limited by MAX_LIN_SPEED
 
 class LineTracker:
@@ -216,7 +216,7 @@ class LineTracker:
 		# Setpoint field expressed as the desired velocity of the body-down frame
 		#  with respect to the world frame parameterized in the body-down frame
 		self.velocity_setpoint = TwistStamped()
-		self.start_streaming_offboard_points()
+		#self.start_streaming_offboard_points()
 		#self.fly_up_obstacle(16, (0,0,0), 0)
 
 		while not rospy.is_shutdown() and self.current_state == None:
@@ -263,10 +263,10 @@ class LineTracker:
 			self.current_marker = msg.markers[0]
 			for marker in msg.markers:
 				current_dist = marker.pose.pose.position.z
-				if current_dist < min_dist:
+				if current_dist < min_dist and marker.id in DISTANCES.keys():
 					self.current_marker = marker
 					min_dist = current_dist
-		if self.current_marker is not None:
+		if self.current_marker is not None and self.current_marker.id in DISTANCES.keys():
 			ar_tag_pos = self.current_marker.pose.pose.position
 			i = self.current_marker.id
 				
