@@ -163,22 +163,7 @@ class LineTracker:
 		'''
 	        self.current_marker = None
 
-	def plan_command(self,pos,ang_err):
-		
-		pid_x, pid_y, pid_yaw = self.pid_control(pos, ang_err)
-		if(not self.within_range()): #line_tracking
-			self.velocity_setpoint.twist.linear.x = pid_x
-			self.velocity_setpoint.twist.linear.y = pid_y
-			self.velocity_setpoint.twist.angular.z = pid_yaw
-			self.velocity_setpoint.twist.linear.z = 0
-		else:
-			self.fly_up_obstacle(self.current_marker.id, pos, ang_err)
-			self.fly_forward(self.current_marker.id) #fly through/around obstacle
-					    #--
-						# RESET position and marker
-			self.reset_pos(self.current_marker.id, pos, ang_err)
-		     
-			ready = False
+
 		
 	def __init__(self, rate=10):
 		""" Initializes publishers and subscribers, sets initial values for vars
@@ -212,16 +197,32 @@ class LineTracker:
 
 		while not rospy.is_shutdown() and self.current_state == None:
 			pass  # Wait for connection
-	def vel_ctrl(self,pos,ang_err):
+	def vel_ctrl(self):
 #		print("Target point deltas/Error:",pos)
-		self.pub_error.publish(Vector3(pos[0],pos[1],ang_err))
-		self.sum_y_err += pos[1]/10
+		
+		self.pub_error.publish(Vector3(self.pos[0],self.pos[1],ang_err))
+		self.sum_y_err += self.pos[1]/10
 		self.sum_ang_err += ang_err
 	#       print("Actuator Velocities:",self.pid_control(pos, ang_err))
 		self.velocity_setpoint = TwistStamped()
-		self.plan_command(pos,ang_err) #plan paths*************************************\
+		pid_x, pid_y, pid_yaw = self.pid_control(self.pos, self.ang_err)
+		if(not self.within_range()): #line_tracking
+			self.velocity_setpoint.twist.linear.x = pid_x
+			self.velocity_setpoint.twist.linear.y = pid_y
+			self.velocity_setpoint.twist.angular.z = pid_yaw
+			self.velocity_setpoint.twist.linear.z = 0
+		else:
+			self.fly_up_obstacle(self.current_marker.id, pos, ang_err)
+			self.fly_forward(self.current_marker.id) #fly through/around obstacle
+					    #--
+						# RESET position and marker
+			self.reset_pos(self.current_marker.id, pos, ang_err)
+		     
+			ready = False
 		self.prev_ang_err = ang_err
 		self.prev_y_err = pos[1]
+		self.ang_err = 0
+		self.pos = (0,0,0)
 	def ar_pose_cb(self, msg):
 		'''
 		Filtering incoming AR message to determine where drone is relative to tag
@@ -270,11 +271,11 @@ class LineTracker:
 
 #			print("Point closest to line:",xc,yc)
 			
-			ang_err = np.arctan(vy/vx)
+			self.ang_err = np.arctan(vy/vx)
 
-			pos = self.d_target_position(xc, yc, vx, vy)
+			self.pos = self.d_target_position(xc, yc, vx, vy)
 
-			self.vel_ctrl(pos,ang_err)
+			#self.vel_ctrl(pos,ang_err)
 		
 			# TODO-START: Create velocity controller based on above specs
 			#raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
@@ -299,10 +300,7 @@ class LineTracker:
 		def run_streaming():
 			self.offboard_point_streaming = True
 			while (not rospy.is_shutdown()) and self.offboard_point_streaming:
-				# Publish commands
-				if(self.current_marker is not None):
-					#fly
-
+				self.vel_ctrl()
 				if (self.velocity_setpoint is not None):
 					# limit speed for safety
 					velocity_setpoint_limited = deepcopy(self.velocity_setpoint)
