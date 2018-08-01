@@ -75,7 +75,7 @@ class LineTracker:
 		dt = 1.0/self.rate_hz
 		vel_cmd_y =  -(K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt  + K_I_Y * self.sum_y_err) #Set negative due to BU frame of reference compared to downward camera
 		yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt + K_I_ANG_Z * self.sum_ang_err)
-        	return (vel_cmd_x,vel_cmd_y, yaw_cmd)
+        return (vel_cmd_x,vel_cmd_y, yaw_cmd)
 
 
 
@@ -95,7 +95,12 @@ class LineTracker:
 			
 	
 	def fly_up_obstacle(self, identity, pos, ang_err):# diagonal fly forward: get into position
-	        # timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
+	    	# timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
+		# BD: (reference purposes) (all signs below in fly_up_obstacle should be flipped according to the comment below)
+		#	x_bd = x_bu		
+		# 	y_bd = -y_bu
+		#	z_bd = -z_bu	
+		#	yaw = -yaw_bu
 		self.isflying_up = True
 		rospy.loginfo("FLying up")
 		duration = DISTANCES[identity][2]/_SPEED
@@ -103,14 +108,14 @@ class LineTracker:
 		# Record the start time
 		start_time = datetime.datetime.now()
 		# Publish command velocites for timedelta seconds
-		self.velocity_setpoint.twist.linear.z = _SPEED 
+		self.velocity_setpoint.twist.linear.z = -_SPEED 
 		self.velocity_setpoint.twist.angular.x = 0
 		self.velocity_setpoint.twist.angular.y = 0
 		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and (NO_ROBOT or self.current_state.mode == 'OFFBOARD'):
 		    pid_x, pid_y, pid_yaw = self.pid_control(pos, ang_err)
 		    self.velocity_setpoint.twist.linear.x = pid_x * BIAS_XY
-		    self.velocity_setpoint.twist.linear.y = pid_y * BIAS_XY
-		    self.velocity_setpoint.twist.angular.z = pid_yaw  * BIAS_XY
+		    self.velocity_setpoint.twist.linear.y = -pid_y * BIAS_XY
+		    self.velocity_setpoint.twist.angular.z = -pid_yaw  * BIAS_XY
 		    rospy.loginfo("flying_up")
 		    self.rate.sleep()
 		# at end of maneuver, set setpoint back to zero
@@ -130,7 +135,7 @@ class LineTracker:
 		# Record the start time
 		start_time = datetime.datetime.now()
 		 # Publish command velocites for timedelta seconds
-		self.velocity_setpoint.twist.linear.x = -_SPEED
+		self.velocity_setpoint.twist.linear.x = _SPEED
 		self.velocity_setpoint.twist.linear.y = 0
 		self.velocity_setpoint.twist.linear.z = 0
 		self.velocity_setpoint.twist.angular.x = 0
@@ -154,14 +159,14 @@ class LineTracker:
 		# Record the start time
 		start_time = datetime.datetime.now()
 		# Publish command velocites for timedelta seconds
-		self.velocity_setpoint.twist.linear.z = -_SPEED
+		self.velocity_setpoint.twist.linear.z = _SPEED
 		self.velocity_setpoint.twist.angular.x = 0
 		self.velocity_setpoint.twist.angular.y = 0
 		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and  (NO_ROBOT or self.current_state.mode == 'OFFBOARD'):
 		    pid_x, pid_y, pid_yaw = self.pid_control(pos, ang_err)
 		    self.velocity_setpoint.twist.linear.x = pid_x * BIAS_XY
-		    self.velocity_setpoint.twist.linear.y = pid_y * BIAS_XY
-		    self.velocity_setpoint.twist.angular.z = pid_yaw * BIAS_XY
+		    self.velocity_setpoint.twist.linear.y = -pid_y * BIAS_XY
+		    self.velocity_setpoint.twist.angular.z = -pid_yaw * BIAS_XY
 		    rospy.loginfo("flying_reset")
 		    self.rate.sleep()
 
@@ -284,14 +289,11 @@ class LineTracker:
 			""" Map line paramaterization to a velocity setpoint so the robot will approach and follow the LED strip
 			
 			Note: Recall the formatting of a Line message when dealing with line_params
-
 			Recomended Steps: 
 			
 			Read the documentation at https://bwsi-uav.github.io/website/line_following.html
-
 			After calculating your various control signals, place them in self.velocity_setpoint (which
 				is a TwistStamped, meaning self.velocity_setpoint.twist.linear.x is x vel for example)
-
 			Be sure to publish your error using self.pub_error.publish(Vector3(x_error,y_error,0))
 	
 			"""
