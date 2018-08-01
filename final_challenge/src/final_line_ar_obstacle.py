@@ -67,7 +67,7 @@ class FinalChallengeController:
 	def line_vel_cb(self, vel_params):
 		self.velocity_setpoint.twist.linear.x = vel_params.x
 		self.velocity_setpoint.twist.linear.y = vel_params.y
-		self.velocity_setpoint.twist.angular.z = -vel_params.z
+		self.velocity_setpoint.twist.angular.z = vel_params.z
 
 	def set_vel_cmd(self):
 		if self.state == 1:
