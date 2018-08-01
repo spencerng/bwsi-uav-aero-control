@@ -15,7 +15,7 @@ from mavros_msgs.msg import State
 from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 
-NO_ROBOT = True # set to True to test on laptop
+NO_ROBOT = False # set to True to test on laptop
 MAX_ANG_SPEED = np.pi/2  #[rad/s]
 MAX_LIN_SPEED = .5 # [m/s]
 K_P_X = 0.05 # TODO: decide upon initial K_P_X
@@ -135,7 +135,7 @@ class LineTracker:
 	#        print("Actuator Velocities:",self.pid_control(pos, ang_err))
 			self.velocity_setpoint = TwistStamped()
 			self.velocity_setpoint.twist.linear.x, self.velocity_setpoint.twist.linear.y, self.velocity_setpoint.twist.angular.z = self.pid_control(pos, ang_err)
-			self.velocity_setpoint.twist.linear.z = 0
+			#self.velocity_setpoint.twist.linear.z = 0
 			self.velocity_setpoint.twist.angular.x = 0
 			self.velocity_setpoint.twist.angular.y = 0
 			self.prev_ang_err = ang_err

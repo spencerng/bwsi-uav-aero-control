@@ -15,14 +15,14 @@ from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 
-NO_ROBOT =True # set to True to test on laptop
+NO_ROBOT = True #set to True to test on laptop
 MAX_ANG_SPEED = np.pi/2  #[rad/s]
 MAX_LIN_SPEED = .5 # [m/s]
 K_P_X = 0.05 # TODO: decide upon initial K_P_X
-K_P_Y = 0.01 # TODO: decide upon initial K_P_Y
+K_P_Y = 0.03 # TODO: decide upon initial K_P_Y
 K_P_Z = 0.02 # TODO: decide upon initial K_P_Z
-K_D_Y = 0.012
-K_I_Y = 0.0
+K_D_Y = 0.024
+K_I_Y = 0.0  # TODO: not implemented yet.
 K_P_ANG_Z = 1.5
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
@@ -32,8 +32,8 @@ CENTER = (64, 64)
 DIST = 50
 MAX_DIST_TO_OBSTACLE = 1.25
 TOL = 0.1
-DISTANCES = {9:(0.0,0.0,-1.0),12:(0.0,0.0,1.0),24:(0.0,0.0,1.0), 16:(0.0,0.0,1.0)} # height distance +z of hole relative to AR tag in 'bu' or -y in 'fc'  TODO - set distances.
-FWD_DISTANCES = {9:0.4,12:0.4,24:0.4,16:0.4} 
+DISTANCES = {9:(0.0,0.0,1.0),21:(0.0,0.0,1.0),24:(0.0,0.0,1.0), 16:(0.0,0.0,1.0)} # height distance +z of hole relative to AR tag in 'bu' or -y in 'fc'  TODO - set distances.
+FWD_DISTANCES = {9:0.4,21:0.4,24:0.4,16:0.4} 
 _SPEED = 0.5 # Fly through/around obstacle and reset position speed - still limited by MAX_LIN_SPEED
 
 class LineTracker:
@@ -101,6 +101,7 @@ class LineTracker:
 		# 	y_bd = -y_bu
 		#	z_bd = -z_bu	
 		#	yaw = -yaw_bu
+		rospy.loginfo("Attempting open loop control - fly_up")
         	x_mark = self.current_marker.pose.pose.position.z
         	y_mark = -self.current_marker.pose.pose.position.x
         	z_mark = -self.current_marker.pose.pose.position.y 
@@ -114,6 +115,10 @@ class LineTracker:
 		self.velocity_setpoint.twist.linear.z = -_SPEED 
 		self.velocity_setpoint.twist.angular.x = 0
 		self.velocity_setpoint.twist.angular.y = 0
+		rospy.loginfo("while:"+ str(not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and (NO_ROBOT or self.current_state.mode == 'OFFBOARD')))	
+		rospy.loginfo("rospy:" + str(not rospy.is_shutdown()))
+		rospy.loginfo("datetime:"+ str(datetime.datetime.now() - start_time < timedelta))
+		rospy.loginfo("OFFBOARD:"+str((NO_ROBOT or self.current_state.mode == 'OFFBOARD')))
 		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and (NO_ROBOT or self.current_state.mode == 'OFFBOARD'):
 		    pid_x, pid_y, pid_yaw = self.pid_control(pos, ang_err)
 		    self.velocity_setpoint.twist.linear.x = pid_x * BIAS_XY
@@ -145,6 +150,10 @@ class LineTracker:
 		self.velocity_setpoint.twist.angular.x = 0
 		self.velocity_setpoint.twist.angular.y = 0
 		self.velocity_setpoint.twist.angular.z = 0 #should we correct yaw based on position?
+		rospy.loginfo("while:"+ str(not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and (NO_ROBOT or self.current_state.mode == 'OFFBOARD')))	
+		rospy.loginfo("rospy:" + str(not rospy.is_shutdown()))
+		rospy.loginfo("datetime:"+ str(datetime.datetime.now() - start_time < timedelta))
+		rospy.loginfo("OFFBOARD:"+str((NO_ROBOT or self.current_state.mode == 'OFFBOARD')))
 		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and  (NO_ROBOT or self.current_state.mode == 'OFFBOARD'):
 		    # Note: we don't actually have to call the publish command here.
 		    # Publish velocity command is automatically done in run_streaming function which is running in parallel
@@ -166,6 +175,10 @@ class LineTracker:
 		self.velocity_setpoint.twist.linear.z = _SPEED
 		self.velocity_setpoint.twist.angular.x = 0
 		self.velocity_setpoint.twist.angular.y = 0
+		rospy.loginfo("while:"+ str(not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and (NO_ROBOT or self.current_state.mode == 'OFFBOARD')))	
+		rospy.loginfo("rospy:" + str(not rospy.is_shutdown()))
+		rospy.loginfo("datetime:"+ str(datetime.datetime.now() - start_time < timedelta))
+		rospy.loginfo("OFFBOARD:"+str((NO_ROBOT or self.current_state.mode == 'OFFBOARD')))
 		while not rospy.is_shutdown() and datetime.datetime.now() - start_time < timedelta and  (NO_ROBOT or self.current_state.mode == 'OFFBOARD'):
 		    pid_x, pid_y, pid_yaw = self.pid_control(pos, ang_err)
 		    self.velocity_setpoint.twist.linear.x = pid_x * BIAS_XY
@@ -244,6 +257,10 @@ class LineTracker:
 			self.velocity_setpoint.twist.linear.y = pid_y
 			self.velocity_setpoint.twist.angular.z = pid_yaw
 			self.velocity_setpoint.twist.linear.z = 0
+			self.isflying_up = False
+			self.isflying_forward = False
+			self.isflying_reset = False
+
 		elif self.current_marker is not None:
 			rospy.loginfo("Attempting open loop control")
 			if not (self.isflying_up or self.isflying_forward or self.isflying_reset):
@@ -261,6 +278,7 @@ class LineTracker:
 		if not (self.isflying_forward or self.isflying_up or self.isflying_reset):
 			self.ang_err = 0
 			self.pos = (0,0,0)
+		self.run_streaming()
 	def ar_pose_cb(self, msg):
 		'''
 		Filtering incoming AR message to determine where drone is relative to tag

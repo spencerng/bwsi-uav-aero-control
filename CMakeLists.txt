@@ -48,6 +48,7 @@ generate_messages(
    DEPENDENCIES
    std_msgs
 )
+catkin_package()
 catkin_package(CATKIN_DEPENDS message_runtime)
 ##   * uncomment the add_*_files sections below as needed
 ##     and list every .msg/.srv/.action file to be processed

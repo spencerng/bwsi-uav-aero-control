@@ -27,20 +27,22 @@ class FinalChallengeController:
 	def __init__(self, rate=10):
 		assert rate > 2 # make sure rate is high enough, if new setpoint recieved within .5 seconds, robot will switch back to POSCTL
 		self.rate_hz = rate
+		self.rate = rospy.Rate(rate)
+		self.velocity_setpoint = TwistStamped()
 		self.pub_pid_vel = rospy.Subscriber("/line_detection/cmd_vel", Vector3, self.line_vel_cb)
-		self.vx_line = 0
-		self.vy_line = 0
 		self.yaw = 0
 		self.state = 1
+		self.offboard_point_streaming = False
 		self.ar_pose_sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, self.ar_pose_cb, queue_size = 1)
-		self.pose_sub = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.pose_sub_cb)
+		self.pub_local_velocity_setpoint = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel", TwistStamped, queue_size=1)
+		#self.pose_sub = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.pose_sub_cb)
 		self.sub_state = rospy.Subscriber("/mavros/state", State, self.state_cb)
 		self.current_marker = None
-		self.velocity_setpoint = TwistStamped()
+
 	
 	def ar_pose_cb(self, msg):
 		markers =  msg.markers
-		if len(markers) = 0:
+		if len(markers) == 0:
 			self.current_marker = None
 		else:
 			for marker in markers:
@@ -70,9 +72,9 @@ class FinalChallengeController:
 	def set_vel_cmd(self):
 		if self.state == 1:
 			rospy.loginfo("Following line; looking for AR tag")
-			while self.current_marker is None:
+			if self.current_marker is not None:
+				#self.state +=1
 				pass
-			#self.state +=1
 			#Line follow until correct AR tag is detected within 5 meters
 		if self.state == 2:
 			while self.current_marker is not None:
@@ -91,11 +93,13 @@ class FinalChallengeController:
 			while not rospy.is_shutdown() and datetime.now() - start_time < timedelta:
 			    rospy.loginfo("flying_up")
 		    	self.rate.sleep()
-		    self.state+=1
+			self.state+=1
 			#Complete open loop control, fly up/down using dead reckoning
 		if self.state == 4:
+			pass
 			#OLC with fly forward
-		if self.state == 5
+		if self.state == 5:
+			pass
 			# OLC with fly opposite of state 3
 			# Should rever bak to state 1
 
@@ -107,9 +111,10 @@ class FinalChallengeController:
 			rospy.loginfo("Streaming")
 			self.set_vel_cmd()
 			while ((not rospy.is_shutdown()) and self.offboard_point_streaming) or NO_ROBOT:
-				
+				#rospy.loginfo("Publishing velocity commands")
 				if (self.velocity_setpoint is not None):
 					# limit speed for safety
+					
 					velocity_setpoint_limited = deepcopy(self.velocity_setpoint)
 					speed = np.linalg.norm([velocity_setpoint_limited.twist.linear.x,
 											velocity_setpoint_limited.twist.linear.y,
