@@ -33,7 +33,7 @@ DIST = 50
 MAX_DIST_TO_OBSTACLE = 1.25
 TOL = 0.1
 DISTANCES = {9:(0.0,0.0,-1.0),12:(0.0,0.0,1.0),24:(0.0,0.0,1.0), 16:(0.0,0.0,1.0)} # height distance +z of hole relative to AR tag in 'bu' or -y in 'fc'  TODO - set distances.
-FWD_DISTANCES = {9:2.25,12:2.25,24:2.25,16:2.25} 
+FWD_DISTANCES = {9:0.4,12:0.4,24:0.4,16:0.4} 
 _SPEED = 0.5 # Fly through/around obstacle and reset position speed - still limited by MAX_LIN_SPEED
 
 class LineTracker:
@@ -101,9 +101,12 @@ class LineTracker:
 		# 	y_bd = -y_bu
 		#	z_bd = -z_bu	
 		#	yaw = -yaw_bu
+        x_mark = -self.current_marker.pose.pose.position.z
+        y_mark = -self.current_marker.pose.pose.position.x
+        z_mark = -self.current_marker.pose.pose.position.y 
 		self.isflying_up = True
 		rospy.loginfo("FLying up")
-		duration = DISTANCES[identity][2]/_SPEED
+		duration = (DISTANCES[identity][2]+z_mark)/_SPEED
 		timedelta = datetime.timedelta(seconds = duration)
 		# Record the start time
 		start_time = datetime.datetime.now()
@@ -130,7 +133,7 @@ class LineTracker:
 		# timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
 		self.isflying_forward = True
 		rospy.loginfo("Flying forward")
-		duration = FWD_DISTANCES[identity]/_SPEED
+		duration = (FWD_DISTANCES[identity] + x_mark)/_SPEED
 		timedelta = datetime.timedelta(seconds = duration)
 		# Record the start time
 		start_time = datetime.datetime.now()
@@ -154,7 +157,7 @@ class LineTracker:
 		'''
 		# timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
 		self.isflying_reset = True
-		duration = DISTANCES[identity][2]/_SPEED
+		duration = (DISTANCES[identity][2]+z_mark)/_SPEED
 		timedelta = datetime.timedelta(seconds = duration)
 		# Record the start time
 		start_time = datetime.datetime.now()
