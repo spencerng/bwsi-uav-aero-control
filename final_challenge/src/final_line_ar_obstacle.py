@@ -62,7 +62,7 @@ class FinalChallengeController:
 			err = Vector3(ar_tag_pos.z-DISTANCES[i][0],ar_tag_pos.x-DISTANCES[i][1],ar_tag_pos.y-DISTANCES[i][2])
 			rospy.loginfo(err)
 			self.pub_error_ar_tag.publish(err)
-			self.vel_ctrl()				
+			
 
 	def line_vel_cb(self, vel_params):
 		self.velocity_setpoint.twist.linear.x = vel_params.x
