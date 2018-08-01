@@ -15,11 +15,11 @@ from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 
-NO_ROBOT = False # set to True to test on laptop
+NO_ROBOT =True # set to True to test on laptop
 MAX_ANG_SPEED = np.pi/2  #[rad/s]
 MAX_LIN_SPEED = .5 # [m/s]
 K_P_X = 0.05 # TODO: decide upon initial K_P_X
-K_P_Y = 0.02 # TODO: decide upon initial K_P_Y
+K_P_Y = 0.01 # TODO: decide upon initial K_P_Y
 K_P_Z = 0.02 # TODO: decide upon initial K_P_Z
 K_D_Y = 0.012
 K_I_Y = 0.0
@@ -75,7 +75,7 @@ class LineTracker:
 		dt = 1.0/self.rate_hz
 		vel_cmd_y =  -(K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt  + K_I_Y * self.sum_y_err) #Set negative due to BU frame of reference compared to downward camera
 		yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt + K_I_ANG_Z * self.sum_ang_err)
-        return (vel_cmd_x,vel_cmd_y, yaw_cmd)
+        	return (vel_cmd_x,vel_cmd_y, yaw_cmd)
 
 
 
@@ -101,9 +101,9 @@ class LineTracker:
 		# 	y_bd = -y_bu
 		#	z_bd = -z_bu	
 		#	yaw = -yaw_bu
-        x_mark = -self.current_marker.pose.pose.position.z
-        y_mark = -self.current_marker.pose.pose.position.x
-        z_mark = -self.current_marker.pose.pose.position.y 
+        	x_mark = self.current_marker.pose.pose.position.z
+        	y_mark = -self.current_marker.pose.pose.position.x
+        	z_mark = -self.current_marker.pose.pose.position.y 
 		self.isflying_up = True
 		rospy.loginfo("FLying up")
 		duration = (DISTANCES[identity][2]+z_mark)/_SPEED
@@ -134,6 +134,7 @@ class LineTracker:
 		self.isflying_forward = True
 		rospy.loginfo("Flying forward")
 		duration = (FWD_DISTANCES[identity] + x_mark)/_SPEED
+		rospy.loginfo(duration)
 		timedelta = datetime.timedelta(seconds = duration)
 		# Record the start time
 		start_time = datetime.datetime.now()
