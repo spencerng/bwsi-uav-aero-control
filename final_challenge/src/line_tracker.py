@@ -11,9 +11,9 @@ from std_msgs.msg import Float32
 from copy import deepcopy
 
 K_P_X = 0.04 # TODO: decide upon initial K_P_X
-K_P_Y = 0.02 # TODO: decide upon initial K_P_Y
+K_P_Y = 0.06 # TODO: decide upon initial K_P_Y
 K_P_Z = 0.02 # TODO: decide upon initial K_P_Z
-K_D_Y = 0.012
+K_D_Y = 0.1
 K_I_Y = 0.0
 K_P_ANG_Z = 1.5
 K_D_ANG_Z = 0.0
@@ -94,7 +94,7 @@ class LineTracker:
 	def pid_control(self, pos, ang_err):
 		vel_cmd_x =  K_P_X * pos[0]
 		dt = 1.0/self.rate_hz
-		vel_cmd_y =  (K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt  + K_I_Y * self.sum_y_err) #Set negative due to BU frame of reference compared to downward camera
+		vel_cmd_y =  -(K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt  + K_I_Y * self.sum_y_err) #Set negative due to BU frame of reference compared to downward camera
 		yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt + K_I_ANG_Z * self.sum_ang_err)
 		return (vel_cmd_x,vel_cmd_y, yaw_cmd)
 	
