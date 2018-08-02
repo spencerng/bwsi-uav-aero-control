@@ -10,13 +10,14 @@ from datetime import datetime
 
 VALID_AR_IDS = []
 VALIDATE_IDS = False 
-AR_FWD_THRESH = 1.25 #desired distance to be away from tag before flying up
+AR_FWD_THRESH = 1.0 #desired distance to be away from tag before flying up
 AR_FWD_TOL = 0.2
 AR_FWD_DIST = 0.75 # distance relative to AR tag to fly forward
 AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.6 #distance to shoot up or down
-K_P_Z = 0.5
+K_P_Z = 0.75
 K_D_Z = 0.0
+NO_ROBOT = True
 
 class ARObstacleHandler:
 	def __init__(self, rate = 10):
@@ -27,13 +28,15 @@ class ARObstacleHandler:
 		self.current_marker = None
 		self.mavros_pose_sub = rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.mavros_pose_cb, queue_size = 1)
 		self.pub_ar_obstacle_vel = rospy.Publisher("/ar_obstacle/cmd_vel", Float32, queue_size=1)
+		self.sub_state = rospy.Subscriber("/mavros/state", State, self.state_cb)
+		self.current_mode = None
 		self.current_pos = None
 		self.pub_ar_obstacle_vel.publish(0.0)
 		self.prev_z_err = 0.0
 		while True:
-			if self.current_marker is not None:
+			if self.current_marker is not None and (self.current_mode=="OFFBOARD" or NO_ROBOT):
 				self.x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
-				self.z_ar_err = self.current_marker.pose.pose.position.y
+				self.z_ar_err = -self.current_marker.pose.pose.position.y
 				if self.x_err <= AR_FWD_TOL:
 					if self.current_marker.id % 2 == 0:
 						self.fly_down()
@@ -45,6 +48,11 @@ class ARObstacleHandler:
 						self.fly_down()
 				else:
 					rospy.loginfo(str(self.x_err) + " m to threshold")
+	def state_cb(self, state):
+		""" Starts setpoint streamer when mode is "POSCTL" and disables it when mode is "MANUAL"
+		:param state: Given by subscribed topic `/mavros/state`
+		"""
+		self.current_mode = getattr(state, "mode", None)
 
 	def fly_up(self):
 		z_orig = self.current_pos.z
@@ -52,7 +60,7 @@ class ARObstacleHandler:
 		z_err = (AR_Z_DIST + self.z_ar_err) - z_delta
 		prev_time = datetime.now()
 		self.prev_z_err = z_err
-		while abs(z_err) > AR_Z_TOL:
+		while abs(z_err) > AR_Z_TOL and (self.current_mode=="OFFBOARD" or NO_ROBOT):
 			dt = datetime.now() - prev_time
 			dt = dt.total_seconds()
 			if dt == 0:
@@ -74,7 +82,7 @@ class ARObstacleHandler:
 		z_err = (-AR_Z_DIST + self.z_ar_err) - z_delta
 		prev_time = datetime.now()
 		self.prev_z_err = z_err
-		while abs(z_err) > AR_Z_TOL:
+		while abs(z_err) > AR_Z_TOL and (self.current_mode=="OFFBOARD" or NO_ROBOT):
 			dt = datetime.now() - prev_time
 			dt = dt.total_seconds()
 			if dt == 0:
@@ -96,7 +104,7 @@ class ARObstacleHandler:
 		x_orig = self.current_pos.x
 		x_delta = self.current_pos.x - x_orig
 		x_err = dist - abs(x_delta)
-		while abs(x_delta) < AR_FWD_DIST:
+		while abs(x_delta) < AR_FWD_DIST and (self.current_mode=="OFFBOARD" or NO_ROBOT):
 			rospy.loginfo("Flying forward: " + str(x_err) + " m left")
 			x_delta = self.current_pos.x - x_orig
 			x_err = dist - abs(x_delta)
