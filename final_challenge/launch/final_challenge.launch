@@ -17,7 +17,8 @@
   <arg name="fcu_protocol" default="v2.0" />
   <arg name="respawn_mavros" default="false" />
 
-  <node name="final_line_ar_obstacle" pkg="aero_control" type="final_line_ar_obstacle.py" output="screen"/>
+  <node name="velocity_handler" pkg="aero_control" type="velocity_handler.py" output="screen"/>
+  <node name="ar_obstacle_avoid_tracker" pkg="aero_control" type="ar_obstacle_avoid_tracker.py" output="screen"/>
   <node name="line_detector" pkg="aero_control" type="detector.py" output="screen"/>
   <node name="line_tracker" pkg="aero_control" type="line_tracker.py" output="screen"/>
 
