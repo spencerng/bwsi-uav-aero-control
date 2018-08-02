@@ -17,7 +17,7 @@ AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.6 #distance to shoot up or down
 K_P_Z = 0.75
 K_D_Z = 0.0
-NO_ROBOT = True
+NO_ROBOT = False
 
 class ARObstacleHandler:
 	def __init__(self, rate = 10):
