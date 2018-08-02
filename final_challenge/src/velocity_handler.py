@@ -12,7 +12,7 @@ from copy import deepcopy
 
 NO_ROBOT =True # set to True to test on laptop
 MAX_ANG_SPEED = np.pi/2  #[rad/s]
-MAX_LIN_SPEED_XY = 0.8 # [m/s]
+MAX_LIN_SPEED_XY = 0.5 # [m/s]
 MAX_LIN_SPEED_Z = .8 # [m/s]
 Z_LIN_SPEED = 0.8
 
@@ -34,8 +34,8 @@ class FinalChallengeController:
 		self.velocity_setpoint.twist.linear.y = vel_params.y
 		self.velocity_setpoint.twist.angular.z = vel_params.z
 	def ar_obstacle_cb(self, msg):
-		self.velocity_setpoint.twist.linear.z =  0
-		#self.velocity_setpoint.twist.linear.z =  msg.data
+		#self.velocity_setpoint.twist.linear.z =  0
+		self.velocity_setpoint.twist.linear.z =  msg.data
 
 	def start_streaming_offboard_points(self):
 		""" Starts thread that will publish yawrate at `rate` in Hz

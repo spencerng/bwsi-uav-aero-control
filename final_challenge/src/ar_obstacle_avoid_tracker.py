@@ -10,9 +10,9 @@ from datetime import datetime
 
 VALID_AR_IDS = []
 VALIDATE_IDS = False 
-AR_FWD_THRESH = 1.0 #desired distance to be away from tag before flying up
+AR_FWD_THRESH = 0.75 #desired distance to be away from tag before flying up
 AR_FWD_TOL = 0.2
-AR_FWD_DIST = 0.25 # distance relative to AR tag to fly forward
+AR_FWD_DIST = 0.75 # distance relative to AR tag to fly forward
 AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.8 #distance to shoot up or down
 K_P_Z = 0.5
@@ -95,11 +95,11 @@ class ARObstacleHandler:
 		dist = self.x_err + AR_FWD_DIST #actual distance to fly
 		x_orig = self.current_pos.x
 		x_delta = self.current_pos.x - x_orig
-		x_err = AR_FWD_DIST - abs(x_delta)
+		x_err = dist - abs(x_delta)
 		while abs(x_delta) < AR_FWD_DIST:
 			rospy.loginfo("Flying forward: " + str(x_err) + " m left")
 			x_delta = self.current_pos.x - x_orig
-			x_err = AR_FWD_DIST - abs(x_delta)
+			x_err = dist - abs(x_delta)
 
 
 	def mavros_pose_cb(self,msg):
