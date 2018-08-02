@@ -1,22 +1,21 @@
 #!/usr/bin/env python
 import rospy
-import threading
-import numpy as np
-import datetime
 from geometry_msgs.msg import TwistStamped, Twist, PoseStamped, Quaternion, Point, Vector3
 from sensor_msgs.msg import Image
-from aero_control.msg import Line
 from std_msgs.msg import Float32
-import cv2
 import mavros
 from mavros_msgs.msg import State
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
+from datetime import datetime
 
-DISTANCES = {9:(0.0,0.0,-1.0),12:(0.0,0.0,1.0),24:(0.0,0.0,1.0), 16:(0.0,0.0,1.0)} 
-AR_FWD_THRESH = 1.0
-AR_FWD_TOL = 0.25
-K_P_Z
-FINAL_CHALLENGE  = True #set true to test on dictionary, false otherwise
+VALID_AR_IDS = []
+VALIDATE_IDS = False 
+AR_FWD_THRESH = 1.0 #desired distance to be away from tag before flying up
+AR_FWD_DIST = 0.25 # distance relative to AR tag to fly forward
+AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
+AR_Z_DIST = 0.8 #distance to shoot up or down
+K_P_Z = 0.5
+K_D_Z = 0.0
 
 class ARObstacleHandler:
 	def __init__(self, rate = 10):
@@ -27,7 +26,75 @@ class ARObstacleHandler:
 		self.mavros_pose_sub = rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.mavros_pose_cb, queue_size = 1)
 		self.pub_ar_obstacle_vel = rospy.Publisher("/ar_obstacle/cmd_vel", Float32, queue_size=1)
 		self.current_pos = None
-		pub_ar_obstacle_vel.publish(0.0)
+		self.pub_ar_obstacle_vel.publish(0.0)
+		self.prev_z_err = 0.0
+		while True:
+			if self.current_marker is not None:
+				self.x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
+				if self.x_err <= AR_FWD_TOL:
+					if self.current_marker.id % 2 == 0:
+						self.fly_down()
+						self.fly_forward()
+						self.fly_up()
+					else: 
+						self.fly_up()
+						self.fly_forward()
+						self.fly_down()
+				else:
+					rospy.loginfo(str(x_err) + " m to threshold")
+
+	def fly_up(self):
+		z_orig = self.current_pos.z
+		z_delta = self.current_pos.z - z_orig
+		z_err = AR_Z_DIST - z_delta
+		prev_time = datetime.now()
+		self.prev_z_err = z_err
+		while abs(z_err) > AR_Z_TOL:
+			dt = datetime.now() - prev_time
+			dt = dt.total_seconds()
+			if dt == 0:
+				dt = 0.0001
+			rospy.loginfo("Flying up: " str(z_err) + " m left")
+			z_vel_cmd = -(K_P_Z * z_err+K_D_Z * (z_err - self.prev_z_err)/dt)
+			self.pub_ar_obstacle_vel.publish(z_vel_cmd)
+			z_delta = self.current_pos.z - z_orig
+			prev_time = datetime.now()
+			self.prev_z_err = z_err
+			z_err = AR_Z_DIST - z_delta
+			self.rate.sleep()
+		return
+
+	def fly_down(self):
+		z_orig = self.current_pos.z
+		z_delta = self.current_pos.z - z_orig
+		z_err = -AR_Z_DIST - z_delta
+		prev_time = datetime.now()
+		self.prev_z_err = z_err
+		while abs(z_err) > AR_Z_TOL:
+			dt = datetime.now() - prev_time
+			dt = dt.total_seconds()
+			if dt == 0:
+				dt = 0.0001
+			rospy.loginfo("Flying down: " str(z_err) + " m left")
+			z_vel_cmd = -(K_P_Z * z_err+K_D_Z * (z_err - self.prev_z_err)/dt)
+			self.pub_ar_obstacle_vel.publish(z_vel_cmd)
+			prev_time = datetime.now()
+			z_delta = self.current_pos.z - z_orig
+			self.prev_z_err = z_err
+			z_err = -AR_Z_DIST - z_delta
+			self.rate.sleep()
+		return
+
+
+	def fly_forward():
+		dist = self.x_err + AR_FWD_DIST #actual distance to fly
+		x_orig = self.current_pos.x
+		x_delta = self.current_pos.x - x_orig
+		x_err = AR_FWD_DIST - abs(x_delta)
+		while abs(x_delta) < AR_FWD_DIST:
+			rospy.loginfo("Flying forward: " + str(x_err) + " m left")
+			x_delta = self.current_pos.x - x_orig
+			x_err = AR_FWD_DIST - abs(x_delta)
 
 
 	def mavros_pose_cb(self,msg):
@@ -40,7 +107,7 @@ class ARObstacleHandler:
 			self.current_marker = None
 		else:
 			for marker in markers:
-				if marker.id in DISTANCES:
+				if not VALIDATE_IDS or marker.id in VALID_AR_IDS:
 					rospy.loginfo("Valid AR marker received")
 			min_dist = markers[0].pose.pose.position.z
 			self.current_marker = markers[0]
@@ -49,8 +116,8 @@ class ARObstacleHandler:
 				if current_dist < min_dist and marker.id in DISTANCES:
 					self.current_marker = marker
 					min_dist = current_dist
-		if self.current_marker is not None and (FINAL_CHALLENGE or self.current_marker.id in DISTANCES.keys()):
-			ar_tag_pos = self.current_marker.pose.pose.position
+		if self.current_marker is not None and (not VALIDATE_IDS or marker.id in VALID_AR_IDS):
+			ar_tag_pos = 
 			i = self.current_marker.id
 				
 			err = ar_tag_pos.z-DISTANCES[i][2]-ar_tag_pos.x-DISTANCES[i][1]

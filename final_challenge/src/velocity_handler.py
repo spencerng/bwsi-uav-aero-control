@@ -2,14 +2,12 @@
 import rospy
 import threading
 import numpy as np
-import datetime
 from geometry_msgs.msg import TwistStamped, Twist, PoseStamped, Quaternion, Point, Vector3
-from sensor_msgs.msg import Image
 from std_msgs.msg import Float32
 import mavros
 from mavros_msgs.msg import State
 from copy import deepcopy
-from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
+
 
 
 NO_ROBOT =True # set to True to test on laptop
