@@ -15,7 +15,7 @@ AR_FWD_TOL = 0.2
 AR_FWD_DIST = 0.75 # distance relative to AR tag to fly forward
 AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.6 #distance to shoot up or down
-K_P_Z = 0.75
+K_P_Z = 2.0
 K_D_Z = 0.0
 NO_ROBOT = False
 
@@ -33,16 +33,18 @@ class ARObstacleHandler:
 		self.current_pos = None
 		self.pub_ar_obstacle_vel.publish(0.0)
 		self.prev_z_err = 0.0
+		self.current_flying_id = 420
 		while True:
-			if self.current_marker is not None and (self.current_mode=="OFFBOARD" or NO_ROBOT):
+			if self.current_marker is not None:
 				self.x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
 				self.z_ar_err = -self.current_marker.pose.pose.position.y
 				if self.x_err <= AR_FWD_TOL:
-					if self.current_marker.id % 2 == 0:
+					self.current_flying_id = self.current_marker.id
+					if self.current_marker.id % 2 == 0 and (self.current_mode=="OFFBOARD" or NO_ROBOT):
 						self.fly_down()
 						self.fly_forward()
 						self.fly_up()
-					else: 
+					elif (self.current_mode=="OFFBOARD" or NO_ROBOT): 
 						self.fly_up()
 						self.fly_forward()
 						self.fly_down()
@@ -54,13 +56,17 @@ class ARObstacleHandler:
 		"""
 		self.current_mode = getattr(state, "mode", None)
 
+	def another_ar_tag_close(self):
+		new_x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
+		return (self.current_marker.id != self.current_flying_id and  new_x_err <=AR_FWD_TOL)
+
 	def fly_up(self):
 		z_orig = self.current_pos.z
 		z_delta = self.current_pos.z - z_orig
 		z_err = (AR_Z_DIST + self.z_ar_err) - z_delta
 		prev_time = datetime.now()
 		self.prev_z_err = z_err
-		while abs(z_err) > AR_Z_TOL and (self.current_mode=="OFFBOARD" or NO_ROBOT):
+		while abs(z_err) > AR_Z_TOL and (self.current_mode=="OFFBOARD" or NO_ROBOT) and not self.another_ar_tag_close():
 			dt = datetime.now() - prev_time
 			dt = dt.total_seconds()
 			if dt == 0:
@@ -82,7 +88,7 @@ class ARObstacleHandler:
 		z_err = (-AR_Z_DIST + self.z_ar_err) - z_delta
 		prev_time = datetime.now()
 		self.prev_z_err = z_err
-		while abs(z_err) > AR_Z_TOL and (self.current_mode=="OFFBOARD" or NO_ROBOT):
+		while abs(z_err) > AR_Z_TOL and (self.current_mode=="OFFBOARD" or NO_ROBOT) and not self.another_ar_tag_close():
 			dt = datetime.now() - prev_time
 			dt = dt.total_seconds()
 			if dt == 0:
@@ -104,7 +110,7 @@ class ARObstacleHandler:
 		x_orig = self.current_pos.x
 		x_delta = self.current_pos.x - x_orig
 		x_err = dist - abs(x_delta)
-		while abs(x_delta) < AR_FWD_DIST and (self.current_mode=="OFFBOARD" or NO_ROBOT):
+		while abs(x_delta) < AR_FWD_DIST and (self.current_mode=="OFFBOARD" or NO_ROBOT) and not self.another_ar_tag_close():
 			rospy.loginfo("Flying forward: " + str(x_err) + " m left")
 			x_delta = self.current_pos.x - x_orig
 			x_err = dist - abs(x_delta)
