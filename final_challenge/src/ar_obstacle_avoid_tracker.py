@@ -31,6 +31,7 @@ class ARObstacleHandler:
 		while True:
 			if self.current_marker is not None:
 				self.x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
+				self.z_ar_err = -self.current_marker.pose.pose.position.y
 				if self.x_err <= AR_FWD_TOL:
 					if self.current_marker.id % 2 == 0:
 						self.fly_down()
@@ -46,7 +47,7 @@ class ARObstacleHandler:
 	def fly_up(self):
 		z_orig = self.current_pos.z
 		z_delta = self.current_pos.z - z_orig
-		z_err = AR_Z_DIST - z_delta
+		z_err = (AR_Z_DIST + self.z_ar_err) - z_delta
 		prev_time = datetime.now()
 		self.prev_z_err = z_err
 		while abs(z_err) > AR_Z_TOL:
@@ -60,14 +61,14 @@ class ARObstacleHandler:
 			z_delta = self.current_pos.z - z_orig
 			prev_time = datetime.now()
 			self.prev_z_err = z_err
-			z_err = AR_Z_DIST - z_delta
+			z_err = (AR_Z_DIST + self.z_ar_err) - z_delta
 			self.rate.sleep()
 		return
 
 	def fly_down(self):
 		z_orig = self.current_pos.z
 		z_delta = self.current_pos.z - z_orig
-		z_err = -AR_Z_DIST - z_delta
+		z_err = (-AR_Z_DIST + self.z_ar_err) - z_delta
 		prev_time = datetime.now()
 		self.prev_z_err = z_err
 		while abs(z_err) > AR_Z_TOL:
@@ -81,7 +82,7 @@ class ARObstacleHandler:
 			prev_time = datetime.now()
 			z_delta = self.current_pos.z - z_orig
 			self.prev_z_err = z_err
-			z_err = -AR_Z_DIST - z_delta
+			z_err = (-AR_Z_DIST + self.z_ar_err) - z_delta
 			self.rate.sleep()
 		return
 
