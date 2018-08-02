@@ -35,7 +35,7 @@ class FinalChallengeController:
 		self.velocity_setpoint.twist.angular.z = vel_params.z
 	def ar_obstacle_cb(self, msg):
 		#self.velocity_setpoint.twist.linear.z =  0
-		self.velocity_setpoint.twist.linear.z =  msg.data
+		self.velocity_setpoint.twist.linear.z =  -msg.data
 
 	def start_streaming_offboard_points(self):
 		""" Starts thread that will publish yawrate at `rate` in Hz
