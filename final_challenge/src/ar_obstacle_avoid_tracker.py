@@ -116,14 +116,6 @@ class ARObstacleHandler:
 				if current_dist < min_dist and marker.id in DISTANCES:
 					self.current_marker = marker
 					min_dist = current_dist
-		if self.current_marker is not None and (not VALIDATE_IDS or marker.id in VALID_AR_IDS):
-			ar_tag_pos = 
-			i = self.current_marker.id
-				
-			err = ar_tag_pos.z-DISTANCES[i][2]-ar_tag_pos.x-DISTANCES[i][1]
-			rospy.loginfo(err)
-			self.pub_error_ar_tag.publish(err)
-	
 
 
 if __name__ == "__main__":
