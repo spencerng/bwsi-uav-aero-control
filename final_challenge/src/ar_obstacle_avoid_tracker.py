@@ -11,7 +11,7 @@ from datetime import datetime
 VALID_AR_IDS = []
 VALIDATE_IDS = False 
 AR_FWD_THRESH = 0.75 #desired distance to be away from tag before flying up
-AR_FWD_DIST = 0.6 # distance relative to AR tag to fly forward
+AR_FWD_DIST = 0.45 # distance relative to AR tag to fly forward
 AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.6 #distance to shoot up or down
 K_P_Z = 1.5
@@ -60,7 +60,7 @@ class ARObstacleHandler:
 	def another_ar_tag_close(self):
 		if self.current_marker is not None:
 			new_x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
-			return (self.current_marker.id != self.current_flying_id and  new_x_err <=AR_FWD_TOL)
+			return (self.current_marker.id != self.current_flying_id and  abs(self.current_marker.pose.pose.position.z) <=AR_FWD_THRESH)
 		return False
 
 	def fly_up(self):
