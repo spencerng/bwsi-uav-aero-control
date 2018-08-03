@@ -17,7 +17,7 @@ AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.6 #distance to shoot up or down
 K_P_Z = 2.0
 K_D_Z = 0.0
-NO_ROBOT = False
+NO_ROBOT = True
 
 class ARObstacleHandler:
 	def __init__(self, rate = 10):
@@ -57,8 +57,10 @@ class ARObstacleHandler:
 		self.current_mode = getattr(state, "mode", None)
 
 	def another_ar_tag_close(self):
-		new_x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
-		return (self.current_marker.id != self.current_flying_id and  new_x_err <=AR_FWD_TOL)
+		if self.current_marker is not None:
+			new_x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
+			return (self.current_marker.id != self.current_flying_id and  new_x_err <=AR_FWD_TOL)
+		return False
 
 	def fly_up(self):
 		z_orig = self.current_pos.z
@@ -80,6 +82,10 @@ class ARObstacleHandler:
 			z_err = (AR_Z_DIST + self.z_ar_err) - z_delta
 			self.rate.sleep()
 		self.pub_ar_obstacle_vel.publish(0.0)
+		if abs(z_err) <= AR_Z_TOL:
+			rospy.loginfo("Nice on!")
+		else:
+			rospy.loginfo("Nice failure!")
 		return
 
 	def fly_down(self):
@@ -102,6 +108,10 @@ class ARObstacleHandler:
 			z_err = (-AR_Z_DIST + self.z_ar_err) - z_delta
 			self.rate.sleep()
 		self.pub_ar_obstacle_vel.publish(0.0)
+		if abs(z_err) <= AR_Z_TOL:
+			rospy.loginfo("Nice on!")
+		else:
+			rospy.loginfo("Nice failure!")
 		return
 
 
@@ -114,7 +124,10 @@ class ARObstacleHandler:
 			rospy.loginfo("Flying forward: " + str(x_err) + " m left")
 			x_delta = self.current_pos.x - x_orig
 			x_err = dist - abs(x_delta)
-
+		if abs(x_delta) >= AR_FWD_DIST:
+			rospy.loginfo("Nice on!")
+		else:
+			rospy.loginfo("Nice failure!")
 
 	def mavros_pose_cb(self,msg):
 		self.current_pos = msg.pose.position
