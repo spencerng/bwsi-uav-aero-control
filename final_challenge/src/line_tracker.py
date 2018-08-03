@@ -10,23 +10,15 @@ from aero_control.msg import Line
 from std_msgs.msg import Float32
 from copy import deepcopy
 
-<<<<<<< HEAD
-K_P_X = 0.03 # TODO: decide upon initial K_P_X
-K_P_Y = 0.03 # TODO: decide upon initial K_P_Y
-K_P_Z = 0.02 # TODO: decide upon initial K_P_Z
+K_P_X = 0.025 # TODO: decide upon initial K_P_X
+K_P_Y = 0.1 # TODO: decide upon initial K_P_Y
 K_D_Y = 0.0
-=======
-K_P_X = 0.2 # TODO: decide upon initial K_P_X
-K_P_Y = 0.095 # TODO: decide upon initial K_P_Y
-K_P_Z = 0.02 # TODO: decide upon initial K_P_Z
-K_D_Y = 0.25
->>>>>>> parent of b486458... Adjust gain values (from first flight)
 K_I_Y = 0.0
-K_P_ANG_Z = 1.5
+K_P_ANG_Z = 0.5
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
 CENTER = (64, 64)
-DIST = 75
+DIST = 40
 TIMEOUT_PERIOD = 1.0
 
 #Responsible of sending velocity commands for line tracking
