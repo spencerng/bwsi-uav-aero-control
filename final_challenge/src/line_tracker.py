@@ -53,7 +53,7 @@ class LineTracker:
 			else:
 				self.td = datetime.now() - self.t_line_last_seen
 				if self.td.total_seconds()>TIMEOUT_PERIOD:
-					#rospy.loginfo("Line lost")
+					rospy.loginfo("Line lost")
 					self.pub_pid_vel.publish(Vector3(0,0,0))
 					self.t_line_last_seen = datetime.now()
 
