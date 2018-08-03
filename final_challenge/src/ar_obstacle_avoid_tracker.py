@@ -10,8 +10,8 @@ from datetime import datetime
 
 VALID_AR_IDS = []
 VALIDATE_IDS = False 
-AR_FWD_THRESH = 0.75 #desired distance to be away from tag before flying up
-AR_FWD_DIST = 0.45 # distance relative to AR tag to fly forward
+AR_FWD_THRESH = 1.25 #desired distance to be away from tag before flying up
+AR_FWD_DIST = 0.6 # distance relative to AR tag to fly forward
 AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.6 #distance to shoot up or down
 K_P_Z = 1.5
@@ -24,6 +24,7 @@ class ARObstacleHandler:
 		self.rate_hz = rate        
 		self.rate = rospy.Rate(rate)
 		self.ar_pose_sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, self.ar_pose_cb, queue_size = 1)
+		self.processing = False
 		self.current_marker = None
 		self.mavros_pose_sub = rospy.Subscriber("/mavros/local_position/pose", PoseStamped, self.mavros_pose_cb, queue_size = 1)
 		self.pub_ar_obstacle_vel = rospy.Publisher("/ar_obstacle/cmd_vel", Float32, queue_size=1)
@@ -36,10 +37,12 @@ class ARObstacleHandler:
 		self.current_flying_id = 420
 		while True:
 			if self.current_marker is not None:
+				self.processing = True
 				self.current_ar_pos = self.current_marker.pose.pose
 				self.current_flying_id = self.current_marker.id
 				self.x_err = abs(AR_FWD_THRESH - abs(self.current_ar_pos.position.z))
 				self.z_ar_err = -self.current_ar_pos.position.y
+				self.processing = False
 				if abs(self.current_ar_pos.position.z) <= AR_FWD_THRESH:
 					if self.current_flying_id % 2 == 0 and (self.current_mode=="OFFBOARD" or NO_ROBOT):
 						self.fly_down()
@@ -139,7 +142,8 @@ class ARObstacleHandler:
 		markers =  msg.markers
 #		rospy.loginfo("Marker data received")
 		if len(markers) == 0:
-			self.current_marker = None
+			if self.processing != True:
+				self.current_marker = None
 		else:
 			for marker in markers:
 				if not VALIDATE_IDS or marker.id in VALID_AR_IDS:
