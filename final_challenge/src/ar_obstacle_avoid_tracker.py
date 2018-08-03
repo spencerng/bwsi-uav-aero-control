@@ -16,7 +16,7 @@ AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.6 #distance to shoot up or down
 K_P_Z = 1.5
 K_D_Z = 0.0
-NO_ROBOT = True
+NO_ROBOT = False
 
 class ARObstacleHandler:
 	def __init__(self, rate = 10):
@@ -30,16 +30,18 @@ class ARObstacleHandler:
 		self.sub_state = rospy.Subscriber("/mavros/state", State, self.state_cb)
 		self.current_mode = None
 		self.current_pos = None
+		self.current_ar_pos = None
 		self.pub_ar_obstacle_vel.publish(0.0)
 		self.prev_z_err = 0.0
 		self.current_flying_id = 420
 		while True:
 			if self.current_marker is not None:
-				self.x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
-				self.z_ar_err = -self.current_marker.pose.pose.position.y
-				if abs(slef.current_marker.pose.pose.position.z) <= AR_FWD_THRESH:
-					self.current_flying_id = self.current_marker.id
-					if self.current_marker.id % 2 == 0 and (self.current_mode=="OFFBOARD" or NO_ROBOT):
+				self.current_ar_pos = self.current_marker.pose.pose
+				self.current_flying_id = self.current_marker.id
+				self.x_err = abs(AR_FWD_THRESH - abs(self.current_ar_pos.position.z))
+				self.z_ar_err = -self.current_ar_pos.position.y
+				if abs(self.current_ar_pos.position.z) <= AR_FWD_THRESH:
+					if self.current_flying_id % 2 == 0 and (self.current_mode=="OFFBOARD" or NO_ROBOT):
 						self.fly_down()
 						self.fly_forward()
 						self.fly_up()
