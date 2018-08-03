@@ -1,15 +1,5 @@
 <launch>
-  <!-- node for ar tag tracking -->
-  <arg name="marker_size" default="26.99" />
-
-<arg name="max_track_error" default="0.2" />
-
-<arg name="cam_image_topic" default="/camera/rgb/image_rect_color/compressed" />
-<arg name="cam_info_topic" default="/camera/rgb/camera_info" />     
-<arg name="output_frame" default="camera_rgb_optical_frame" />
-
-<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen" args="$(arg marker_size)  $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame)" />
-  <node pkg="rosservice" type="rosservice" name="global_loc" args="call --wait /mavros/setpoint_velocity/mav_frame 8"/>
+  
   
   <!-- Launch mavros -->
   <arg name="fcu_url" default="udp://127.0.0.1:14550@" />
@@ -24,6 +14,29 @@
   <node name="ar_obstacle_avoid_tracker" pkg="aero_control" type="ar_obstacle_avoid_tracker.py" output="screen"/>
   <node name="line_detector" pkg="aero_control" type="detector.py" output="screen"/>
   <node name="line_tracker" pkg="aero_control" type="line_tracker.py" output="screen"/>
+
+  <!-- node for ar tag tracking -->
+  <arg name="marker_size" default="26.99" />
+
+<arg name="max_track_error" default="0.2" />
+  
+<arg name="cam_image_topic" default="/camera/rgb/image_rect_color/compressed" />
+<arg name="cam_info_topic" default="/camera/rgb/camera_info" />     
+<arg name="output_frame" default="camera_rgb_optical_frame" />
+
+  <node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen">
+    <param name="output_frame" type="string" value="camera_rgb_optical_frame"/>
+    <param name="marker_size" type="double" value="26.99"/>    
+    <remap from="camera_image" to="/camera/rgb/image_raw"/>
+    <remap from="camera_info"  to="/camera/rgb/camera_info"/>
+  </node>
+
+  <node name="republish_front" pkg="image_transport" output="screen" type="republish" args="compressed in:=/camera/rgb/image_rect_color raw out:=/camera/rgb/image_raw"/>
+  
+
+  <node name="republish_down" pkg="image_transport" output="screen" type="republish" args="compressed in:=/aero_downward_camera/image raw out:=/aero_downward_camera/image"/>
+
+  <node pkg="rosservice" type="rosservice" name="global_loc" args="call --wait /mavros/setpoint_velocity/mav_frame 8"/>
 
 
   <include file="$(find mavros)/launch/node.launch">

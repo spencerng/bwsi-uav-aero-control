@@ -1,11 +1,6 @@
 <launch>
-  <!-- node for ar tag tracking -->
-  <node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen">
-    <param name="output_frame" type="string" value="camera_rgb_optical_frame"/>
-    <param name="marker_size" type="double" value="26.99"/>    
-    <remap from="camera_image" to="/camera/rgb/image_raw"/>
-    <remap from="camera_info"  to="/camera/rgb/camera_info"/>
-  </node>
+  
+
   <node pkg="rosservice" type="rosservice" name="global_loc" args="call --wait /mavros/setpoint_velocity/mav_frame 8"/>
   
   <!-- Launch mavros -->
@@ -21,6 +16,14 @@
   <node name="ar_obstacle_avoid_tracker" pkg="aero_control" type="ar_obstacle_avoid_tracker.py" output="screen"/>
   <node name="line_detector" pkg="aero_control" type="detector.py" output="screen"/>
   <node name="line_tracker" pkg="aero_control" type="line_tracker.py" output="screen"/>
+
+  <!-- node for ar tag tracking -->
+  <node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen">
+    <param name="output_frame" type="string" value="camera_rgb_optical_frame"/>
+    <param name="marker_size" type="double" value="26.99"/>    
+    <remap from="camera_image" to="/camera/rgb/image_raw"/>
+    <remap from="camera_info"  to="/camera/rgb/camera_info"/>
+  </node>
 
 
   <include file="$(find mavros)/launch/node.launch">

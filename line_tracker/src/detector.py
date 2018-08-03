@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import rospy
 from std_msgs.msg import String
-from sensor_msgs.msg import Image, CompressedImage
+from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from aero_control.msg import Line
 import sys
@@ -14,7 +14,7 @@ class LineDetector:
 	def __init__(self):
 
 		#raise Exception("CODE INCOMPLETE! Delete this exception and complete the following lines")
-		self.sub_cam = rospy.Subscriber("/aero_downward_camera/image/compressed", CompressedImage, self.image_cb)
+		self.sub_cam = rospy.Subscriber("/aero_downward_camera/image", Image, self.image_cb)
 		#raise Exception("CODE INCOMPLETE! Delete this exception and complete the following lines")
 		# self.sub_cam = # TODO: subscribe to downward facing camera, and set callaback to image_cb
 		# self.pub_param = # TODO: create a publisher for line parameterizations
@@ -80,7 +80,8 @@ class LineDetector:
 		# TODO-END
 
 	def image_cb(self, data):
-		line = self.parameterizeLine(self.bridge.compressed_imgmsg_to_cv2(data, "bgr8"))
+		
+		line = self.parameterizeLine(self.bridge.imgmsg_to_cv2(data, "8UC1"))
 		
 #		print(line)
 		if line is not None:
