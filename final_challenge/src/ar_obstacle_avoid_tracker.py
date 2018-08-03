@@ -14,7 +14,7 @@ AR_FWD_THRESH = 0.75 #desired distance to be away from tag before flying up
 AR_FWD_DIST = 0.6 # distance relative to AR tag to fly forward
 AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.6 #distance to shoot up or down
-K_P_Z = 2.0
+K_P_Z = 1.5
 K_D_Z = 0.0
 NO_ROBOT = True
 
