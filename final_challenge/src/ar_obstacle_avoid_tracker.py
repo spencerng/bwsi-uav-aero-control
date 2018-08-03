@@ -10,12 +10,11 @@ from datetime import datetime
 
 VALID_AR_IDS = []
 VALIDATE_IDS = False 
-AR_FWD_THRESH = 1.0 #desired distance to be away from tag before flying up
-AR_FWD_TOL = 0.2
-AR_FWD_DIST = 0.75 # distance relative to AR tag to fly forward
+AR_FWD_THRESH = 0.75 #desired distance to be away from tag before flying up
+AR_FWD_DIST = 0.6 # distance relative to AR tag to fly forward
 AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.6 #distance to shoot up or down
-K_P_Z = 2.0
+K_P_Z = 1.5
 K_D_Z = 0.0
 NO_ROBOT = True
 
@@ -38,7 +37,7 @@ class ARObstacleHandler:
 			if self.current_marker is not None:
 				self.x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
 				self.z_ar_err = -self.current_marker.pose.pose.position.y
-				if self.x_err <= AR_FWD_TOL:
+				if abs(slef.current_marker.pose.pose.position.z) <= AR_FWD_THRESH:
 					self.current_flying_id = self.current_marker.id
 					if self.current_marker.id % 2 == 0 and (self.current_mode=="OFFBOARD" or NO_ROBOT):
 						self.fly_down()

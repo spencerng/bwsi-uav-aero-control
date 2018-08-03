@@ -1,10 +1,8 @@
 <launch>
   
-
-  <node pkg="rosservice" type="rosservice" name="global_loc" args="call --wait /mavros/setpoint_velocity/mav_frame 8"/>
   
   <!-- Launch mavros -->
-  <arg name="fcu_url" default="tcp://127.0.0.1:5760" />
+  <arg name="fcu_url" default="udp://127.0.0.1:14550@" />
   <arg name="gcs_url" default="" />
   <arg name="tgt_system" default="1" />
   <arg name="tgt_component" default="1" />
@@ -18,12 +16,20 @@
   <node name="line_tracker" pkg="aero_control" type="line_tracker.py" output="screen"/>
 
   <!-- node for ar tag tracking -->
+
   <node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen">
     <param name="output_frame" type="string" value="camera_rgb_optical_frame"/>
     <param name="marker_size" type="double" value="26.99"/>    
-    <remap from="camera_image" to="/camera/rgb/image_raw"/>
+    <remap from="camera_image" to="/camera/rgb/image_color"/>
     <remap from="camera_info"  to="/camera/rgb/camera_info"/>
   </node>
+
+  <node name="republish_front" pkg="image_transport" output="screen" type="republish" args="compressed in:=/camera/rgb/image_rect_color raw out:=/camera/rgb/image_color"/>
+  
+
+  <node name="republish_down" pkg="image_transport" output="screen" type="republish" args="compressed in:=/aero_downward_camera/image raw out:=/aero_downward_camera/image"/>
+
+  <node pkg="rosservice" type="rosservice" name="global_loc" args="call --wait /mavros/setpoint_velocity/mav_frame 8"/>
 
 
   <include file="$(find mavros)/launch/node.launch">
@@ -94,59 +100,6 @@
   <!-- Worker threads for the nodelet manager -->
   <arg name="num_worker_threads" default="4" />
 
-  <!-- Push down all topics/nodelets into "camera" namespace -->
-  <group ns="$(arg camera)">
-
-    <!-- Start nodelet manager in provided namespace -->
-    <arg name="manager" value="$(arg camera)_nodelet_manager" />
-    <arg name="debug" default="false" /> <!-- Run manager in GDB? -->
-    <include file="$(find rgbd_launch)/launch/includes/manager.launch.xml">
-      <arg name="name"                value="$(arg manager)" />
-      <arg name="debug"               value="$(arg debug)" />
-      <arg name="num_worker_threads"  value="$(arg num_worker_threads)" />
-    </include>
-
-    <!-- Load driver -->
-    <include if="$(arg load_driver)"
-             file="$(find realsense_camera)/launch/includes/nodelet_rgbd.launch.xml">
-      <arg name="manager"                   value="$(arg manager)" />
-      <arg name="camera"                    value="$(arg camera)" />
-      <arg name="camera_type"               value="$(arg camera_type)" />
-      <arg name="serial_no"                 value="$(arg serial_no)" />
-      <arg name="usb_port_id"               value="$(arg usb_port_id)" />
-      <arg name="depth"                     value="$(arg depth)" />
-      <arg name="rgb"                       value="$(arg rgb)" />
-      <arg name="ir"                        value="$(arg ir)" />
-      <arg name="publish_tf"                value="$(arg publish_tf)" />
-      <arg name="mode"                      value="$(arg mode)" />
-      <arg name="depth_width"               value="$(arg depth_width)" />
-      <arg name="depth_height"              value="$(arg depth_height)" />
-      <arg name="color_width"               value="$(arg color_width)" />
-      <arg name="color_height"              value="$(arg color_height)" />
-      <arg name="depth_fps"                 value="$(arg depth_fps)" />
-      <arg name="color_fps"                 value="$(arg color_fps)" />
-    </include>
-
-    <!-- Load standard constellation of processing nodelets -->
-    <include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
-      <arg name="manager"                         value="$(arg manager)" />
-      <arg name="rgb"                             value="$(arg rgb)" />
-      <arg name="ir"                              value="$(arg ir)" />
-      <arg name="depth"                           value="$(arg depth)" />
-      <arg name="depth_registered"                value="$(arg depth_registered)" />
-      <arg name="projector"                       value="$(arg projector)" />
-      <arg name="respawn"                         value="$(arg respawn)" />
-      <arg name="rgb_processing"                  value="$(arg rgb_processing)" />
-      <arg name="debayer_processing"              value="$(arg debayer_processing)" />
-      <arg name="ir_processing"                   value="$(arg ir_processing)" />
-      <arg name="depth_processing"                value="$(arg depth_processing)" />
-      <arg name="depth_registered_processing"     value="$(arg depth_registered_processing)" />
-      <arg name="disparity_processing"            value="$(arg disparity_processing)" />
-      <arg name="disparity_registered_processing" value="$(arg disparity_registered_processing)" />
-      <arg name="hw_registered_processing"        value="$(arg hw_registered_processing)" />
-      <arg name="sw_registered_processing"        value="$(arg sw_registered_processing)" />
-    </include>
-
-  </group> <!-- camera -->
+  
 
 </launch>
