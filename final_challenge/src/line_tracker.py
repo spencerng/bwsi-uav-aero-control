@@ -10,10 +10,10 @@ from aero_control.msg import Line
 from std_msgs.msg import Float32
 from copy import deepcopy
 
-K_P_X = 2.0 # TODO: decide upon initial K_P_X
-K_P_Y = 2.5 # TODO: decide upon initial K_P_Y
+K_P_X = 0.03 # TODO: decide upon initial K_P_X
+K_P_Y = 0.03 # TODO: decide upon initial K_P_Y
 K_P_Z = 0.02 # TODO: decide upon initial K_P_Z
-K_D_Y = 0.5
+K_D_Y = 0.0
 K_I_Y = 0.0
 K_P_ANG_Z = 1.5
 K_D_ANG_Z = 0.0
@@ -93,6 +93,7 @@ class LineTracker:
 	def pid_control(self, pos, ang_err):
 		vel_cmd_x =  K_P_X * pos[0]
 		dt = 1.0/self.rate_hz
+		rospy.loginfo("Kx: " + str(vel_cmd_x))
 		vel_cmd_y =  -(K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt  + K_I_Y * self.sum_y_err) #Set negative due to BU frame of reference compared to downward camera
 		rospy.loginfo("Kpy: " + str(-K_P_Y*pos[1]) + "\nKdy: " + str(-K_D_Y * (pos[1]-self.prev_y_err)/dt) + "\nKiy: " + str(K_I_Y * -self.sum_y_err))
 		yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt + K_I_ANG_Z * self.sum_ang_err)
