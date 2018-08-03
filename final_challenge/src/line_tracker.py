@@ -11,10 +11,10 @@ from std_msgs.msg import Float32
 from copy import deepcopy
 
 K_P_X = 0.2 # TODO: decide upon initial K_P_X
-K_P_Y = 0.095 # TODO: decide upon initial K_P_Y
+K_P_Y = 0.1 # TODO: decide upon initial K_P_Y
 K_P_Z = 0.02 # TODO: decide upon initial K_P_Z
 K_D_Y = 0.25
-K_I_Y = 0.0
+K_I_Y = 0.01
 K_P_ANG_Z = 1.5
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0

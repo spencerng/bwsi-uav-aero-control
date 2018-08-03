@@ -13,7 +13,7 @@ from copy import deepcopy
 NO_ROBOT =True # set to True to test on laptop
 MAX_ANG_SPEED = np.pi/2  #[rad/s]
 MAX_LIN_SPEED_XY = 0.5 # [m/s]
-MAX_LIN_SPEED_Z = .8 # [m/s]
+MAX_LIN_SPEED_Z = 1.0 # [m/s]
 Z_LIN_SPEED = 1.0
 
 class FinalChallengeController:
