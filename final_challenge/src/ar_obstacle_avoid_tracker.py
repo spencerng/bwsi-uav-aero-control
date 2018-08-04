@@ -11,9 +11,9 @@ from datetime import datetime
 VALID_AR_IDS = []
 VALIDATE_IDS = False 
 AR_FWD_THRESH = 1.25 #desired distance to be away from tag before flying up
-AR_FWD_DIST = 0.6 # distance relative to AR tag to fly forward
+AR_FWD_DIST = 1.0 # distance relative to AR tag to fly forward
 AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
-AR_Z_DIST = 0.6 #distance to shoot up or down
+AR_Z_DIST = 0.7 #distance to shoot up or down
 K_P_Z = 1.5
 K_D_Z = 0.0
 NO_ROBOT = False
@@ -63,6 +63,8 @@ class ARObstacleHandler:
 	def another_ar_tag_close(self):
 		if self.current_marker is not None:
 			new_x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
+			if (self.current_marker.id != self.current_flying_id and  abs(self.current_marker.pose.pose.position.z) <=AR_FWD_THRESH):
+				rospy.loginfo("Switching to another tag!")
 			return (self.current_marker.id != self.current_flying_id and  abs(self.current_marker.pose.pose.position.z) <=AR_FWD_THRESH)
 		return False
 
