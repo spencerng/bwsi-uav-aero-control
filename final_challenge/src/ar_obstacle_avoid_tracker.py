@@ -4,6 +4,7 @@ from geometry_msgs.msg import TwistStamped, Twist, PoseStamped, Quaternion, Poin
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32
 import mavros
+import copy
 from mavros_msgs.msg import State
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 from datetime import datetime
@@ -37,13 +38,10 @@ class ARObstacleHandler:
 		self.current_flying_id = 420
 		while True:
 			if self.current_marker is not None:
-				self.processing = True
-				self.current_ar_pos = self.current_marker.pose.pose
-				self.current_flying_id = self.current_marker.id
 				self.x_err = abs(AR_FWD_THRESH - abs(self.current_ar_pos.position.z))
 				self.z_ar_err = -self.current_ar_pos.position.y
-				self.processing = False
 				if abs(self.current_ar_pos.position.z) <= AR_FWD_THRESH:
+					self.processing = True
 					if self.current_flying_id % 2 == 0 and (self.current_mode=="OFFBOARD" or NO_ROBOT):
 						self.fly_down()
 						self.fly_forward()
@@ -52,6 +50,7 @@ class ARObstacleHandler:
 						self.fly_up()
 						self.fly_forward()
 						self.fly_down()
+					self.processing = False
 				else:
 					rospy.loginfo(str(self.x_err) + " m to threshold")
 	def state_cb(self, state):
@@ -144,19 +143,24 @@ class ARObstacleHandler:
 		markers =  msg.markers
 #		rospy.loginfo("Marker data received")
 		if len(markers) == 0:
-			if self.processing != True:
-				self.current_marker = None
+			self.current_marker = None
 		else:
 			for marker in markers:
 				if not VALIDATE_IDS or marker.id in VALID_AR_IDS:
 					rospy.loginfo("Valid AR marker received")
 			min_dist = markers[0].pose.pose.position.z
 			self.current_marker = markers[0]
+			if not self.processing:
+				self.current_ar_pos = copy.copy(self.current_marker.pose.pose)
+				self.current_flying_id = copy.copy(self.current_marker.id)
 			for marker in markers:
 				current_dist = marker.pose.pose.position.z
-				if current_dist < min_dist and marker.id in DISTANCES:
+				if current_dist < min_dist:
 					self.current_marker = marker
 					min_dist = current_dist
+					if not self.processing:
+						self.current_ar_pos = copy.copy(self.current_marker.pose.pose)
+						self.current_flying_id = copy.copy(self.current_marker.id)
 
 
 if __name__ == "__main__":
