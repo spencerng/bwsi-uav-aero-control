@@ -61,10 +61,11 @@ class ARObstacleHandler:
 
 	def another_ar_tag_close(self):
 		if self.current_marker is not None:
-			new_x_err = abs(AR_FWD_THRESH - abs(self.current_marker.pose.pose.position.z))
-			if (self.current_marker.id != self.current_flying_id and  abs(self.current_marker.pose.pose.position.z) <=AR_FWD_THRESH):
+			self.new_marker = copy.copy(self.current_marker)
+			new_x_err = abs(AR_FWD_THRESH - abs(self.new_marker.pose.pose.position.z))
+			if (self.new_marker.id != self.current_flying_id and  abs(self.new_marker.pose.pose.position.z) <=AR_FWD_THRESH):
 				rospy.loginfo("Switching to another tag!")
-			return (self.current_marker.id != self.current_flying_id and  abs(self.current_marker.pose.pose.position.z) <=AR_FWD_THRESH)
+			return (self.new_marker.id != self.current_flying_id and  abs(self.new_marker.pose.pose.position.z) <=AR_FWD_THRESH)
 		return False
 
 	def fly_up(self):
