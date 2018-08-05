@@ -12,10 +12,10 @@ from copy import deepcopy
 
 
 K_P_X = 0.03 # TODO: decide upon initial K_P_X
-K_P_Y = 0.012 # TODO: decide upon initial K_P_Y
+K_P_Y = 0.01 # TODO: decide upon initial K_P_Y
 K_D_Y = 0.003
 K_I_Y = 0.0
-K_P_ANG_Z = 1.75
+K_P_ANG_Z = 1.9
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
 CENTER = (64, 64)
