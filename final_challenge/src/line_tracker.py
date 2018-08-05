@@ -11,15 +11,15 @@ from std_msgs.msg import Float32
 from copy import deepcopy
 
 
-K_P_X = 0.02 # TODO: decide upon initial K_P_X
-K_P_Y = 0.008 # TODO: decide upon initial K_P_Y
-K_D_Y = 0.001
+K_P_X = 0.03 # TODO: decide upon initial K_P_X
+K_P_Y = 0.012 # TODO: decide upon initial K_P_Y
+K_D_Y = 0.003
 K_I_Y = 0.0
 K_P_ANG_Z = 1.75
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
 CENTER = (64, 64)
-DIST = 20
+DIST = 25
 TIMEOUT_PERIOD = 1.0
 
 #Responsible of sending velocity commands for line tracking
