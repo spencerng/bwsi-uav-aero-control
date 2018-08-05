@@ -12,7 +12,7 @@ from datetime import datetime
 VALID_AR_IDS = []
 VALIDATE_IDS = False 
 AR_FWD_THRESH = 1.25 #desired distance to be away from tag before flying up
-AR_FWD_DIST = 1.0 # distance relative to AR tag to fly forward
+AR_FWD_DIST = 0.75 # distance relative to AR tag to fly forward
 AR_Z_TOL = 0.2 #tolerance for when drone starts flying forward
 AR_Z_DIST = 0.7 #distance to shoot up or down
 K_P_Z = 1.5
