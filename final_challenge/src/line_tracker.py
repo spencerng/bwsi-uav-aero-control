@@ -12,14 +12,14 @@ from copy import deepcopy
 
 
 K_P_X = 0.02 # TODO: decide upon initial K_P_X
-K_P_Y = 0.01 # TODO: decide upon initial K_P_Y
+K_P_Y = 0.0115 # TODO: decide upon initial K_P_Y
 K_D_Y = 0.003
 K_I_Y = 0.0
 K_P_ANG_Z = 1.8
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
 CENTER = (64, 64)
-DIST = 30
+DIST = 35
 TIMEOUT_PERIOD = 1.0
 
 #Responsible of sending velocity commands for line tracking
