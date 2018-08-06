@@ -11,16 +11,27 @@ from std_msgs.msg import Float32
 from copy import deepcopy
 
 
+<<<<<<< HEAD
 K_P_X = 0.02
 K_P_Y = 0.008
 K_D_Y = 0.001
+=======
+K_P_X = 0.02 # TODO: decide upon initial K_P_X
+K_P_Y = 0.0115 # TODO: decide upon initial K_P_Y
+K_D_Y = 0.003
+>>>>>>> c141680f8d208705a9128ec6883ddf9d50ab329a
 K_I_Y = 0.0
-K_P_ANG_Z = 1.75
+K_P_ANG_Z = 1.8
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
 CENTER = (64, 64)
+<<<<<<< HEAD
 DIST = 20 # distance in pixelspace to extrapolate for target point
 TIMEOUT_PERIOD = 0.5 # time before activating hover failsafe [s]
+=======
+DIST = 35
+TIMEOUT_PERIOD = 1.0
+>>>>>>> c141680f8d208705a9128ec6883ddf9d50ab329a
 
 #Responsible for sending velocity commands for line tracking
 
