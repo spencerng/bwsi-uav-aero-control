@@ -15,14 +15,17 @@ from cv_bridge import CvBridge, CvBridgeError
 from copy import deepcopy
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 
+#Messy, but working code that combines line tracking and AR obstacle detection
+#Now replaced by code in the final_challenge module
+
 NO_ROBOT = True #set to True to test on laptop
 MAX_ANG_SPEED = np.pi/2  #[rad/s]
 MAX_LIN_SPEED = .5 # [m/s]
-K_P_X = 0.05 # TODO: decide upon initial K_P_X
-K_P_Y = 0.03 # TODO: decide upon initial K_P_Y
-K_P_Z = 0.02 # TODO: decide upon initial K_P_Z
+K_P_X = 0.05 
+K_P_Y = 0.03 
+K_P_Z = 0.02 
 K_D_Y = 0.024
-K_I_Y = 0.0  # TODO: not implemented yet.
+K_I_Y = 0.0  
 K_P_ANG_Z = 1.5
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
@@ -128,13 +131,9 @@ class LineTracker:
 		    self.rate.sleep()
 		# at end of maneuver, set setpoint back to zero
 		self.isflying_up = False
-		#TODO
 		#if X distance is very small in BU (or Z in FC) to AR tag, X velocity in BU should be minimal
 		#Possible solution: heavily bias Z error in final velocity vector
 
-		'''
-		Done = TODO ******************************************************************
-		'''
 		# timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
 		self.isflying_forward = True
 		rospy.loginfo("Flying forward")
@@ -162,9 +161,7 @@ class LineTracker:
 		    self.rate.sleep()
 		# at end of maneuver, set setpoint back to zero
 		self.isflying_forward = False
-		'''
-		Done = TODO move fwd_distances in x *************
-		'''
+		
 		# timedelta (datetime.timedelta object) is the amount of time the velocity message will be published for
 		self.isflying_reset = True
 		duration = (DISTANCES[identity][2]+z_mark)/_SPEED
@@ -190,17 +187,11 @@ class LineTracker:
 		# at end of maneuver, set setpoint back to zero
 		self.isflying_reset = False
 		'''
-		TODO possibly use distance sensor ******************************************************************
+		TODO possibly use distance sensor 
 		'''
-	        self.current_marker = None
+	    self.current_marker = None
 		rospy.loginfo("Marker_reset")
 		self.velocity_setpoint = TwistStamped()
-	#def fly_forward(self, identity): # fly through/around obstacle
-		
-
-	#def reset_pos(self, identity, pos, ang_err): #diagonal segway into line_follow flightpath
-		
-
 
 		
 	def __init__(self, rate=10):
@@ -334,10 +325,7 @@ class LineTracker:
 			if not (self.isflying_up or self.isflying_forward or self.isflying_reset):
 				self.vel_ctrl()
 		
-			# TODO-START: Create velocity controller based on above specs
-			#raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
-			# TODO-END
-
+			
 	def state_cb(self, state):
 		""" Starts setpoint streamer when mode is "POSCTL" and disables it when mode is "MANUAL"
 		:param state: Given by subscribed topic `/mavros/state`

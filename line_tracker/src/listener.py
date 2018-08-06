@@ -3,9 +3,7 @@
 from __future__ import division, print_function
 
 import rospy
-# TODO-START: Import our custom message
-from aero_control.msg import Line #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
-# TODO-END
+from aero_control.msg import Line
 
 
 '''
@@ -13,25 +11,20 @@ A python script to practice receiving ROS messages
 '''
 
 class Listener():
-    ''' Subscribes to ROS messages
-    '''
-    def __init__(self):
-        # TODO-START: subscribe to our custom chatter topic, using chatter_callback as the callback
-        rospy.Subscriber("/line_detection/line", Line, self.chatter_callback)# raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
-        # TODO-END
+	''' Subscribes to ROS messages
+	'''
+	def __init__(self):
+		rospy.Subscriber("/line_detection/line", Line, self.chatter_callback)# raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
 
-    def chatter_callback(self, msg):
-        ''' Function to be run everytime a message is received on chatter topic
-        '''
-        # TODO-START: print the x, y, vx, and vy values in msg
-        rospy.loginfo(msg) #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
-        # TODO-END
+	def chatter_callback(self, msg):
+		''' Function to be run everytime a message is received on chatter topic
+		'''
+		rospy.loginfo(msg)
+
 
 if __name__ == '__main__':
-    '''
-    This is where the code starts running
-    '''
-    rospy.init_node('listener')
-    l_obj = Listener()
-    print("Listener node running")
-    rospy.spin()
+
+	rospy.init_node('listener')
+	l_obj = Listener()
+	print("Listener node running")
+	rospy.spin()

@@ -11,18 +11,18 @@ from std_msgs.msg import Float32
 from copy import deepcopy
 
 
-K_P_X = 0.02 # TODO: decide upon initial K_P_X
-K_P_Y = 0.008 # TODO: decide upon initial K_P_Y
+K_P_X = 0.02
+K_P_Y = 0.008
 K_D_Y = 0.001
 K_I_Y = 0.0
 K_P_ANG_Z = 1.75
 K_D_ANG_Z = 0.0
 K_I_ANG_Z = 0.0
 CENTER = (64, 64)
-DIST = 20
-TIMEOUT_PERIOD = 1.0
+DIST = 20 # distance in pixelspace to extrapolate for target point
+TIMEOUT_PERIOD = 0.5 # time before activating hover failsafe [s]
 
-#Responsible of sending velocity commands for line tracking
+#Responsible for sending velocity commands for line tracking
 
 class LineTracker:
 
@@ -38,7 +38,7 @@ class LineTracker:
 		self.pub_pid_vel = rospy.Publisher("/line_detection/cmd_vel", Vector3, queue_size=1)
 		self.sub_line_param = rospy.Subscriber("/line_detection/line", Line, self.line_param_cb)
 		
-		# Variables dealing with publishing setpoint
+		# Variables dealing with publishing setpoint and PID control
 		
 		self.prev_y_err = 0.0
 		self.sum_y_err = 0.0
@@ -47,6 +47,7 @@ class LineTracker:
 		
 		self.velocity_setpoint = TwistStamped()
 		self.t_line_last_seen = None
+
 		while True:
 			if self.t_line_last_seen is None:
 				self.pub_pid_vel.publish(Vector3(0,0,0))
@@ -54,10 +55,10 @@ class LineTracker:
 				self.td = datetime.now() - self.t_line_last_seen
 				if self.td.total_seconds()>TIMEOUT_PERIOD:
 					#rospy.loginfo("Line lost")
-					self.pub_pid_vel.publish(Vector3(0,0,0))
+					self.pub_pid_vel.publish(Vector3(0,0,0)) # Hover failsafe
 					self.t_line_last_seen = datetime.now()
 
-
+	#Ensures that drone is always traveling toward the +x direction (in downward camera)
 	@staticmethod
 	def conv_vect(v_x, v_y):
 		if v_x<0:
@@ -65,6 +66,8 @@ class LineTracker:
 		  v_y = -1*v_y
 		return(v_x, v_y)
 
+	
+	#Returns coordinates of closest point to drone's position on the received line
 	@staticmethod
 	def find_closest_point(x, y, v_x, v_y):
 		m_reg = v_y/v_x
@@ -82,10 +85,12 @@ class LineTracker:
 	def find_error(xc, yc):
 		return (xc-CENTER[0], yc-CENTER[1])
 
+	#Returns pixelspace coordinates of the target point
 	@staticmethod
 	def d_target_position(xc, yc, v_x, v_y):
-		#Gives distance from drone current position to target point
+		#Gives distance from drone's current position to target point
 		#Target point is DIST away from the closest point, in the +x direction
+
 		theta=np.arctan(v_y/v_x)
 		x_f = xc + DIST*np.cos(theta)
 		y_f = yc + DIST*np.sin(theta)
@@ -94,17 +99,20 @@ class LineTracker:
 	def pid_control(self, pos, ang_err):
 		vel_cmd_x =  K_P_X * pos[0]
 		dt = 1.0/self.rate_hz
-		vel_cmd_y =  -(K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt  + K_I_Y * self.sum_y_err) #Set negative due to BU frame of reference compared to downward camera
+
+		#Set negative due to BD frame of reference compared to downward camera
+		vel_cmd_y =  -(K_P_Y * pos[1]+ K_D_Y * (pos[1]-self.prev_y_err)/dt  + K_I_Y * self.sum_y_err) 
 		yaw_cmd = - (K_P_ANG_Z * ang_err + K_D_ANG_Z * (ang_err-self.prev_ang_err)/dt + K_I_ANG_Z * self.sum_ang_err)
 		return (vel_cmd_x,vel_cmd_y, yaw_cmd)
 	
 	def line_param_cb(self, line_params):
 		vx,vy = self.conv_vect(line_params.vx, line_params.vy)
-		if vx ==0:
-			vx = 0.001
+		
+		if vx ==0: # Prevent division by zero
+			vx = 0.000001
 		xc,yc =  self.find_closest_point(line_params.x, line_params.y, vx, vy)
 		
-		self.ang_err = np.arctan(vy/vx)
+		self.ang_err = np.arctan(vy/vx) # Given in radians
 
 		self.pos = self.d_target_position(xc, yc, vx, vy)
 

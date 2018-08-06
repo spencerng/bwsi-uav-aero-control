@@ -10,28 +10,28 @@ A python script to practice receiving ROS messages
 '''
 
 class Listener():
-    ''' Subscribes to ROS messages
-    '''
-    def __init__(self):
+	''' Subscribes to ROS messages
+	'''
+	def __init__(self):
 
-        # subscription objects
-        self.chatter_sub = rospy.Subscriber("/chatter", String, self.chatter_callback)
+		# subscription objects
+		self.chatter_sub = rospy.Subscriber("/chatter", String, self.chatter_callback)
 
 
-    def chatter_callback(self, msg):
-        ''' Function to be run everytime a message is received on chatter topic
-        '''
+	def chatter_callback(self, msg):
+		''' Function to be run everytime a message is received on chatter topic
+		'''
 
-        '''TODO-START: FILL IN CODE HERE 
-        * print out the message received to the terminal
-        '''
-	print(msg)
+		'''
+		* print out the message received to the terminal
+		'''
+	   print(msg)
 
 if __name__ == '__main__':
-    '''
-    This is where the code starts running
-    '''
-    rospy.init_node('listener')
-    l_obj = Listener()
-    print("Listener node running")
-    rospy.spin()
+	'''
+	This is where the code starts running
+	'''
+	rospy.init_node('listener')
+	l_obj = Listener()
+	print("Listener node running")
+	rospy.spin()

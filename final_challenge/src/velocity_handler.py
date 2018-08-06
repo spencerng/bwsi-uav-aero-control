@@ -8,14 +8,14 @@ import mavros
 from mavros_msgs.msg import State
 from copy import deepcopy
 
+# Master controller, responsible for capping velocities and sending velocity commands
 
 
-NO_ROBOT =True # set to True to test on laptop
-MAX_ANG_SPEED = np.pi/2  #[rad/s]
+NO_ROBOT = True # set to True to test on laptop
+MAX_ANG_SPEED = np.pi/2  # [rad/s]
 MAX_LIN_SPEED_X = 0.8 # [m/s]
 MAX_LIN_SPEED_Y = 0.7 # [m/s]
-MAX_LIN_SPEED_Z = .8 # [m/s]
-Z_LIN_SPEED = 1.0
+MAX_LIN_SPEED_Z = 1.0 # [m/s]
 
 class FinalChallengeController:
 	def __init__(self, rate=10):
@@ -25,18 +25,18 @@ class FinalChallengeController:
 		self.velocity_setpoint = TwistStamped()
 		self.sub_pid_vel = rospy.Subscriber("/line_detection/cmd_vel", Vector3, self.line_vel_cb)
 		self.sub_ar_obstacle_vel = rospy.Subscriber("/ar_obstacle/cmd_vel", Float32, self.ar_obstacle_cb)
-		self.offboard_point_streaming = False
 		self.pub_local_velocity_setpoint = rospy.Publisher("/mavros/setpoint_velocity/cmd_vel", TwistStamped, queue_size=1)
-		#self.pose_sub = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.pose_sub_cb)
 		self.sub_state = rospy.Subscriber("/mavros/state", State, self.state_cb)
+
+		self.offboard_point_streaming = False
 
 	def line_vel_cb(self, vel_params):
 		self.velocity_setpoint.twist.linear.x = vel_params.x
 		self.velocity_setpoint.twist.linear.y = vel_params.y
 		self.velocity_setpoint.twist.angular.z = vel_params.z
+
 	def ar_obstacle_cb(self, msg):
-		#self.velocity_setpoint.twist.linear.z =  0
-		self.velocity_setpoint.twist.linear.z =  -msg.data
+		self.velocity_setpoint.twist.linear.z =  -msg.data #Negated due to BD frame rather than BU
 
 	def start_streaming_offboard_points(self):
 		""" Starts thread that will publish yawrate at `rate` in Hz
@@ -45,30 +45,25 @@ class FinalChallengeController:
 			self.offboard_point_streaming = True
 			rospy.loginfo("Streaming")
 			while ((not rospy.is_shutdown()) and self.offboard_point_streaming) or NO_ROBOT:
-				#rospy.loginfo("Publishing velocity commands")
 				if (self.velocity_setpoint is not None):
-					# limit speed for safety
 					
+					# limit speed for safety
 					velocity_setpoint_limited = deepcopy(self.velocity_setpoint)
 					if np.absolute(velocity_setpoint_limited.twist.linear.x) > MAX_LIN_SPEED_X:
 						velocity_setpoint_limited.twist.linear.x = MAX_LIN_SPEED_X * np.sign(velocity_setpoint_limited.twist.linear.x)
 					if np.absolute(velocity_setpoint_limited.twist.linear.y) > MAX_LIN_SPEED_Y:
 						velocity_setpoint_limited.twist.linear.y = MAX_LIN_SPEED_Y * np.sign(velocity_setpoint_limited.twist.linear.y)
-
-
 					if np.absolute(velocity_setpoint_limited.twist.linear.z) > MAX_LIN_SPEED_Z:
 						velocity_setpoint_limited.twist.linear.z = MAX_LIN_SPEED_Z * np.sign(velocity_setpoint_limited.twist.linear.z)
+					
 					yaw_cmd = velocity_setpoint_limited.twist.angular.z 
 					if np.absolute(yaw_cmd) > MAX_ANG_SPEED:
 						yaw_cmd = np.sign(yaw_cmd) * MAX_ANG_SPEED
 					velocity_setpoint_limited.twist.angular.z  = yaw_cmd
+					
 					# Publish limited setpoint
 					self.pub_local_velocity_setpoint.publish(velocity_setpoint_limited)
 				self.rate.sleep()
-				#self.velocity_setpoint = TwistStamped()
-				#self.pub_local_velocity_setpoint.publish(self.velocity_setpoint)
-				#set default, no line detected behavior here
-				
 
 		self.offboard_point_streaming_thread = threading.Thread(target=run_streaming)
 		self.offboard_point_streaming_thread.start()

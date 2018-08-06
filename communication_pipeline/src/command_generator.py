@@ -13,46 +13,42 @@ A python script to practice sending ROS messages
 '''
 
 class VelocityCommander():
-    ''' Generates and publishes ROS messages
-    '''
-    def __init__(self, command_frequency=10.0):
+	''' Generates and publishes ROS messages
+	'''
+	def __init__(self, command_frequency=10.0):
 
-        # publishing objects
-        self.velocity_command_pub = rospy.Publisher("/velocity_command", Twist, queue_size=1)
+		# publishing objects
+		self.velocity_command_pub = rospy.Publisher("/velocity_command", Twist, queue_size=1)
 
-        # rate of publishing
-        self.command_frequency = rospy.Rate(command_frequency)
+		# rate of publishing
+		self.command_frequency = rospy.Rate(command_frequency)
 
-    def start_command_stream(self):
-        ''' send velocity command messages
-        '''
-        while (not rospy.is_shutdown()):
-            vel_cmd = Twist()
-            t = time.time()
-            a = 0.1
-            '''TODO-START: FILL IN CODE HERE 
-            * create a velocity command along the x-axis that oscillates with amplitude 0.1 m/s and period 2 seconds
-            * All other velocity command components should be zero
-            '''
-	    vel_cmd.linear.x = a*np.cos(np.pi*t)
-	    vel_cmd.linear.y = 0
-	    vel_cmd.linear.z = 0
-	    vel_cmd.angular.x = 0		
-	    vel_cmd.angular.y = 0
-	    vel_cmd.angular.z = 0
-            #raise Exception("CODE INCOMPLETE! Delete this exception and replace with your own code")
-            '''TODO-END '''
-            self.velocity_command_pub.publish(vel_cmd)
-            self.command_frequency.sleep()
+	def start_command_stream(self):
+		''' send velocity command messages
+		'''
+		while (not rospy.is_shutdown()):
+			vel_cmd = Twist()
+			t = time.time()
+			a = 0.1
+			'''
+			* create a velocity command along the x-axis that oscillates with amplitude 0.1 m/s and period 2 seconds
+			* All other velocity command components should be zero
+			'''
+			vel_cmd.linear.x = a*np.cos(np.pi*t)
+			vel_cmd.linear.y = 0
+			vel_cmd.linear.z = 0
+			vel_cmd.angular.x = 0
+			vel_cmd.angular.y = 0
+			vel_cmd.angular.z = 0
+			
+			self.velocity_command_pub.publish(vel_cmd)
+			self.command_frequency.sleep()
 
 if __name__ == '__main__':
-    '''
-    This is where the code starts running
-    '''
-    rospy.init_node('velocity_commander')
-    vc_obj = VelocityCommander()
-    print("VelocityCommander node running")
+	rospy.init_node('velocity_commander')
+	vc_obj = VelocityCommander()
+	print("VelocityCommander node running")
 
-    # start the chatter
-    vc_obj.start_command_stream()
-    rospy.spin()
+	# start the chatter
+	vc_obj.start_command_stream()
+	rospy.spin()

@@ -9,10 +9,11 @@ from tf.transformations import *
 from geometry_msgs.msg import Twist, PoseStamped, TwistStamped, PoseArray
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 from std_msgs.msg import String
-
-
 import mavros
 from mavros_msgs.msg import State
+
+#Instructor open-loop code, now replaced with refined closed-loop control in final challenge module
+
 # Distance constants
 ###########################################################################################################################
 # TODO: decide on points at which you want to hover in front of obstacles before flying through

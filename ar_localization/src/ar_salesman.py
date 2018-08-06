@@ -4,10 +4,9 @@ from datetime import datetime
 from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 import rospy
 
-#all permutations of tag IDs
+#Given an image of various AR tags on a wall, draw the path to go through all of them with the least distance
 
-
-#define distance formula
+#distance formula
 def dist(a, b, dict): #given two permutations:
     return math.sqrt((dict[a][0]-dict[b][0])**2+(dict[a][1]-dict[b][1])**2)
 
